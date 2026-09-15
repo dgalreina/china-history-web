@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope, Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
 
@@ -16,6 +16,15 @@ const notoSerifSC = Noto_Serif_SC({
 export const metadata: Metadata = {
   title: "China History",
   description: "Explora cómo era un lugar de China en cualquier época.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "China History",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#e9e7e2",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
