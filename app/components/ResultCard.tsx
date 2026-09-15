@@ -1,6 +1,6 @@
 'use client';
 
-type Result = {
+export type Result = {
   lugar: string;
   año: string;
   contexto_ambiental: string;

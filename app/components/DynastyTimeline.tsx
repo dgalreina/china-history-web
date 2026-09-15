@@ -39,7 +39,7 @@ const SEGMENTS: Segment[] = [
   { label: 'Comunismo', hanzi: '新中国', start: 1949, end: 2000, color: '#7d7a73', hanziColor: '#d4d2cc' },
 ];
 
-function segmentAt(year: number) {
+export function segmentAt(year: number) {
   return SEGMENTS.find((seg) => year >= seg.start && (year < seg.end || seg.end === MAX_YEAR)) ?? SEGMENTS[0];
 }
 
@@ -47,7 +47,7 @@ function segmentAt(year: number) {
 // el segmento vecino, así que se omite y solo queda el color + tooltip.
 const LABEL_MIN_SPAN = 80;
 
-function formatYear(year: number) {
+export function formatYear(year: number) {
   if (year < 0) return `${-year} a.C.`;
   return `${year} d.C.`;
 }
