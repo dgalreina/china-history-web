@@ -23,10 +23,21 @@ export default function MapView({ onClick }: { onClick: (lat: number, lng: numbe
 
     const map = new mapboxgl.Map({
       container: mapContainer.current!,
-      style: 'mapbox://styles/mapbox/satellite-v9',
+      style: 'mapbox://styles/mapbox/satellite-streets-v12',
       center: [116.4, 39.9], // Beijing
       zoom: 4,
       maxZoom: 8, // evita acercarse tanto como para reconocer ciudades/carreteras modernas
+    });
+
+    map.on('style.load', () => {
+      // Queremos nombres de ciudades/pueblos pero sin el ruido visual de
+      // carreteras, puentes y túneles (ni sus etiquetas de nombre/número).
+      const layers = map.getStyle()?.layers ?? [];
+      for (const layer of layers) {
+        if (/^(road|bridge|tunnel)/.test(layer.id)) {
+          map.setLayoutProperty(layer.id, 'visibility', 'none');
+        }
+      }
     });
 
     map.on('click', (e) => {

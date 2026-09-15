@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import MapView from './components/MapView';
 import DynastyTimeline, { formatYear, segmentAt } from './components/DynastyTimeline';
 import ResultCard, { type Result } from './components/ResultCard';
@@ -50,13 +50,26 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
+  // Para la tarjeta simulada guardamos solo el lugar del último clic: el
+  // año/dinastía se recalculan en cada render a partir de `year`, así la
+  // tarjeta cambia sola al arrastrar el slider sin esperar a otro clic.
+  const [pickedPlace, setPickedPlace] = useState<string | null>(null);
+  const [hasPicked, setHasPicked] = useState(false);
+
+  const liveMockResult = useMemo(
+    () => (hasPicked ? mockResult(year, pickedPlace) : null),
+    [hasPicked, year, pickedPlace],
+  );
+  const displayResult = BACKEND_ENABLED ? result : liveMockResult;
+
   const handleMapClick = useCallback(async (lat: number, lng: number) => {
     if (!BACKEND_ENABLED) {
       setNotice(null);
-      setResult(null);
+      setHasPicked(false);
       setLoading(true);
       const placeName = await reverseGeocode(lat, lng);
-      setResult(mockResult(year, placeName));
+      setPickedPlace(placeName);
+      setHasPicked(true);
       setLoading(false);
       return;
     }
@@ -79,13 +92,13 @@ export default function Home() {
     <main className="relative h-dvh w-full overflow-hidden">
       <MapView onClick={handleMapClick} />
 
-      {!loading && !result && !notice && (
+      {!loading && !displayResult && !notice && (
         <h1 className="pointer-events-none absolute left-4 top-4 font-brush text-lg font-semibold tracking-wide text-paper drop-shadow-md sm:left-6 sm:top-6">
           China History
         </h1>
       )}
 
-      {(loading || result || notice) && (
+      {(loading || displayResult || notice) && (
         <div className="pointer-events-none absolute inset-x-4 top-4 flex justify-center sm:inset-x-6 sm:top-6">
           <div className="pointer-events-auto w-full max-w-md">
             {loading && (
@@ -98,7 +111,7 @@ export default function Home() {
                 {notice}
               </p>
             )}
-            {!loading && !notice && <ResultCard result={result} />}
+            {!loading && !notice && <ResultCard result={displayResult} />}
           </div>
         </div>
       )}

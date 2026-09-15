@@ -90,8 +90,8 @@ export default function DynastyTimeline({ year, onChange }: { year: number; onCh
       })}
 
       <div
-        className="pointer-events-none absolute top-1/2 h-9 w-0.5 -translate-x-1/2 -translate-y-1/2 bg-ink shadow"
-        style={{ left: `${percent}%` }}
+        className="pointer-events-none absolute top-1/2 h-9 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-paper"
+        style={{ left: `${percent}%`, boxShadow: '0 0 0 1.5px rgba(29,27,25,0.6), 0 1px 3px rgba(0,0,0,0.4)' }}
       />
 
       <input
