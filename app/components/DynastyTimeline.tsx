@@ -59,10 +59,34 @@ export default function DynastyTimeline({ year, onChange }: { year: number; onCh
   return (
     <div className="relative h-12 w-full select-none">
       <div
-        className="pointer-events-none absolute -top-8 -translate-x-1/2 whitespace-nowrap rounded bg-ink px-2 py-1 text-xs font-semibold text-paper shadow"
-        style={{ left: `clamp(4.5rem, ${percent}%, calc(100% - 4.5rem))` }}
+        className="absolute -top-8 flex -translate-x-1/2 items-center gap-1.5"
+        style={{ left: `clamp(6rem, ${percent}%, calc(100% - 6rem))` }}
       >
-        {current.label} · {formatYear(year)}
+        <button
+          type="button"
+          onClick={() => onChange(Math.max(MIN_YEAR, year - STEP))}
+          aria-label="Año anterior"
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink text-paper shadow active:scale-95"
+        >
+          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+
+        <div className="whitespace-nowrap rounded bg-ink px-2 py-1 text-xs font-semibold text-paper shadow">
+          {current.label} · {formatYear(year)}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onChange(Math.min(MAX_YEAR, year + STEP))}
+          aria-label="Año siguiente"
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink text-paper shadow active:scale-95"
+        >
+          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </button>
       </div>
 
       <div className="absolute inset-x-0 top-1/2 flex h-7 -translate-y-1/2 overflow-hidden rounded-sm ring-1 ring-ink/30">
