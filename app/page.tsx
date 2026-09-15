@@ -19,8 +19,10 @@ async function reverseGeocode(lat: number, lng: number): Promise<string | null> 
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   if (!token) return null;
   try {
+    // "locality" antes que "place": localidades más pequeñas (p. ej. Xiong'an)
+    // deben ganar a la ciudad/prefectura grande que las engloba (p. ej. Baoding).
     const res = await fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?types=place&language=es&access_token=${token}`,
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?types=locality,place&language=es&access_token=${token}`,
     );
     const data = await res.json();
     return data?.features?.[0]?.text ?? null;
