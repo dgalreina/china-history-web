@@ -33,3 +33,31 @@ body {
   background: var(--color-paper);
   color: var(--color-ink);
 }
+
+/* Amplía la zona de agarre real del slider de año sin tocar nada visual:
+   el thumb nativo (invisible) es del tamaño mínimo recomendado (44px)
+   para que sea fácil de coger con el dedo, aunque la línea que se ve
+   sea mucho más fina. */
+.timeline-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+.timeline-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  cursor: pointer;
+}
+.timeline-range::-moz-range-thumb {
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.timeline-range::-moz-range-track {
+  background: transparent;
+}

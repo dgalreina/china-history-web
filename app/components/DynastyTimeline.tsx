@@ -126,7 +126,7 @@ export default function DynastyTimeline({ year, onChange }: { year: number; onCh
         value={year}
         onChange={(e) => onChange(Number(e.target.value))}
         aria-label="Año"
-        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        className="timeline-range absolute inset-0 h-full w-full cursor-pointer opacity-0"
       />
     </div>
   );
