@@ -2,6 +2,7 @@
 import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { CHINA_BOUNDS, CHINA_MASK_GEOJSON, isInsideChina } from '../lib/chinaBoundary';
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
@@ -27,6 +28,7 @@ export default function MapView({ onClick }: { onClick: (lat: number, lng: numbe
       center: [116.4, 39.9], // Beijing
       zoom: 4,
       maxZoom: 8, // evita acercarse tanto como para reconocer ciudades/carreteras modernas
+      maxBounds: CHINA_BOUNDS, // no se puede arrastrar el mapa fuera de China
     });
 
     map.on('style.load', () => {
@@ -38,9 +40,21 @@ export default function MapView({ onClick }: { onClick: (lat: number, lng: numbe
           map.setLayoutProperty(layer.id, 'visibility', 'none');
         }
       }
+
+      // Oscurece todo lo que no sea China (relleno del mundo con un
+      // agujero recortado al contorno real de China + Hainan).
+      map.addSource('china-mask', { type: 'geojson', data: CHINA_MASK_GEOJSON as any });
+      map.addLayer({
+        id: 'china-mask-fill',
+        type: 'fill',
+        source: 'china-mask',
+        paint: { 'fill-color': '#000000', 'fill-opacity': 0.65 },
+      });
     });
 
     map.on('click', (e) => {
+      if (!isInsideChina(e.lngLat.lat, e.lngLat.lng)) return; // fuera de China: no se puede tocar
+
       onClickRef.current(e.lngLat.lat, e.lngLat.lng);
 
       if (markerRef.current) {
