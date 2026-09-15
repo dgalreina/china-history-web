@@ -25,7 +25,13 @@ async function reverseGeocode(lat: number, lng: number): Promise<string | null> 
       `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?types=locality,place&language=es&access_token=${token}`,
     );
     const data = await res.json();
-    return data?.features?.[0]?.text ?? null;
+    const features: { text?: string }[] = data?.features ?? [];
+    // Algunas "locality" chinas le llegan a Mapbox sin traducir del todo
+    // (p. ej. "district de Mudan": tradujo la plantilla pero no la palabra
+    // "district"). Si pasa, mejor caer a la siguiente feature (la "place"
+    // que la engloba) que enseñar ese texto a medio traducir.
+    const clean = features.find((f) => f.text && !/\bdistrict\b/i.test(f.text));
+    return (clean ?? features[0])?.text ?? null;
   } catch {
     return null;
   }
