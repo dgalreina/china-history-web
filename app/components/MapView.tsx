@@ -6,7 +6,7 @@ import { CHINA_BOUNDS, CHINA_MASK_GEOJSON, isInsideChina } from '../lib/chinaBou
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
-export default function MapView({ onClick }: { onClick: (lat: number, lng: number) => void }) {
+export default function MapView({ onClick, apiUrl }: { onClick: (lat: number, lng: number) => void; apiUrl: string }) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
@@ -69,13 +69,19 @@ export default function MapView({ onClick }: { onClick: (lat: number, lng: numbe
           .addTo(map);
       }
     });
+    map.on('load', () => {
+      // Aviso propio (no del proveedor) de que el mapa se ha cargado, para
+      // el panel de consumo — ver UsagePanel.tsx.
+      fetch(`${apiUrl}/usage/map-load`, { method: 'POST' }).catch(() => {});
+    });
+
     mapRef.current = map;
 
     return () => {
       map.remove();
       mapRef.current = null;
     };
-  }, []);
+  }, [apiUrl]);
 
   return <div ref={mapContainer} className="absolute inset-0 h-full w-full" />;
 }

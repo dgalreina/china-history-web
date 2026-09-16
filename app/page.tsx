@@ -3,14 +3,17 @@ import { useState, useCallback, useMemo } from 'react';
 import MapView from './components/MapView';
 import DynastyTimeline, { formatYear, segmentAt } from './components/DynastyTimeline';
 import ResultCard, { type Result } from './components/ResultCard';
+import UsagePanel from './components/UsagePanel';
 
-const API_URL = 'http://localhost:4000';
+// En local usa el backend de tu máquina; en producción, configura
+// NEXT_PUBLIC_API_URL en las variables de entorno de DigitalOcean con la
+// URL pública de china-history-api.
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
-// El backend aún no está desplegado (para no pagar por algo que todavía no
-// hace nada real). Mientras tanto no lo llamamos: se simula una respuesta
-// con el año y la dinastía reales del slider, para poder pulir el frontend
-// como si viniera del backend.
-const BACKEND_ENABLED = false;
+// El backend ya hace algo real (Tavily + Claude), así que lo llamamos de
+// verdad. El modo simulado (mockResult más abajo) se queda por si hace
+// falta seguir puliendo el frontend sin gastar peticiones reales.
+const BACKEND_ENABLED = true;
 
 // Geocodificación inversa de Mapbox (mismo token del mapa, no es nuestro
 // backend) solo para poner un nombre de lugar real en la tarjeta simulada
@@ -98,12 +101,18 @@ export default function Home() {
 
   return (
     <main className="relative h-dvh w-full overflow-hidden">
-      <MapView onClick={handleMapClick} />
+      <MapView onClick={handleMapClick} apiUrl={API_URL} />
 
       {!loading && !displayResult && !notice && (
         <h1 className="pointer-events-none absolute left-4 top-4 font-brush text-lg font-semibold tracking-wide text-paper drop-shadow-md sm:left-6 sm:top-6">
           China History
         </h1>
+      )}
+
+      {!loading && !displayResult && !notice && (
+        <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+          <UsagePanel apiUrl={API_URL} />
+        </div>
       )}
 
       {(loading || displayResult || notice) && (
