@@ -69,7 +69,10 @@ export function ImagenPanel({ result, fase, children }: { result: Result; fase: 
           className={`panoramica h-full w-full object-cover transition-[filter] duration-500 ${generandoImagen ? 'blur-[3px] brightness-75' : ''}`}
         />
       ) : (
-        <div className="h-full w-full" />
+        // Sin ninguna imagen previa (la primera consulta de la sesión): un
+        // fondo oscuro para que el velo se vea igual de definido que
+        // cuando sí hay una foto detrás, en vez de un gris plano.
+        <div className="h-full w-full bg-ink" />
       )}
 
       {generandoImagen && (
