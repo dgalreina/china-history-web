@@ -2,7 +2,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import MapView from './components/MapView';
 import DynastyTimeline, { segmentAt } from './components/DynastyTimeline';
-import { ImagenPanel, TextoPanel, type Fase, type Result } from './components/ResultPanels';
+import { ImagenPanel, PortadaPanel, TextoPanel, type Fase, type Result } from './components/ResultPanels';
 import UsagePanel from './components/UsagePanel';
 
 // En local usa el backend de tu máquina; en producción, configura
@@ -216,27 +216,24 @@ export default function Home() {
     <UsagePanel apiUrl={API_URL} model={model} length={length} onModelChange={setModel} onLengthChange={setLength} />
   );
 
-  // Sin resultado: el mapa ocupa toda la pantalla. Con resultado: la imagen
-  // ocupa una mitad (arriba en móvil, izquierda en pantallas anchas) y el
-  // mapa o el texto la otra. El mapa no se desmonta al cambiar de layout —
-  // solo cambia el tamaño de su contenedor — para no recargarlo.
+  // Dos mitades (arriba/abajo en móvil, izquierda/derecha en pantallas
+  // anchas): la imagen — la portada hasta que hay resultado — y el mapa o
+  // el texto, con la barra de tiempo siempre visible.
   return (
     <main className="relative h-dvh w-full overflow-hidden bg-paper">
-      {hayResultado && (
-        <div className="absolute inset-x-0 top-0 h-1/2 md:inset-y-0 md:h-full md:w-1/2">
+      <div className="absolute inset-x-0 top-0 h-1/2 md:inset-y-0 md:h-full md:w-1/2">
+        {hayResultado ? (
           <ImagenPanel result={displayResult} fase={fase}>
             <div className="absolute right-4 top-4">{usagePanel}</div>
           </ImagenPanel>
-        </div>
-      )}
+        ) : (
+          <PortadaPanel>
+            <div className="absolute right-4 top-4">{usagePanel}</div>
+          </PortadaPanel>
+        )}
+      </div>
 
-      <div
-        className={
-          hayResultado
-            ? 'absolute inset-x-0 bottom-0 h-1/2 md:inset-y-0 md:left-1/2 md:h-full md:w-1/2'
-            : 'absolute inset-0'
-        }
-      >
+      <div className="absolute inset-x-0 bottom-0 h-1/2 md:inset-y-0 md:left-1/2 md:h-full md:w-1/2">
         <MapView onClick={handleMapClick} apiUrl={API_URL} focus={focus} />
 
         {hayResultado && vista === 'texto' && (
@@ -245,15 +242,6 @@ export default function Home() {
           <div className="absolute inset-0 z-3">
             <TextoPanel result={displayResult} fase={fase} />
           </div>
-        )}
-
-        {!hayResultado && (
-          <>
-            <h1 className="pointer-events-none absolute left-4 top-4 font-brush text-lg font-semibold tracking-wide text-paper drop-shadow-md sm:left-6 sm:top-6">
-              China History
-            </h1>
-            <div className="absolute right-4 top-4">{usagePanel}</div>
-          </>
         )}
 
         {hayResultado && (

@@ -21,6 +21,22 @@ const fiabilidadColor: Record<string, string> = {
   baja: '#c62828',
 };
 
+// Mitad de la imagen mientras no hay resultado: la vasija de la portada
+// (misma imagen que el icono de la app) con el título encima.
+export function PortadaPanel({ children }: { children?: React.ReactNode }) {
+  return (
+    <div className="relative h-full w-full overflow-hidden bg-ink">
+      <img src="/portada.jpg" alt="" className="h-full w-full object-cover object-[center_45%]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-linear-to-b from-ink/70 to-transparent" />
+      <div className="absolute left-4 top-4 flex flex-col gap-1 text-paper drop-shadow-md">
+        <h1 className="font-brush text-2xl font-bold leading-tight">China History</h1>
+        <p className="text-sm font-semibold tracking-wide opacity-90">Elige un lugar y un año</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 // Mitad de la imagen: a sangre, con lugar y año encima. `children` es lo
 // que la página quiera colocar sobre la foto (el botón de consumo).
 export function ImagenPanel({ result, fase, children }: { result: Result; fase: Fase; children?: React.ReactNode }) {
@@ -37,7 +53,7 @@ export function ImagenPanel({ result, fase, children }: { result: Result; fase: 
         </div>
       )}
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-ink/70 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-linear-to-b from-ink/70 to-transparent" />
       <div className={`absolute left-4 top-4 flex flex-col gap-1 text-paper drop-shadow-md ${fase === 'cargando' ? 'opacity-60' : ''}`}>
         <h2 className="font-brush text-2xl font-bold leading-tight">{result.lugar}</h2>
         <p className="text-sm font-semibold tracking-wide opacity-90">
@@ -76,7 +92,7 @@ export function TextoPanel({ result, fase }: { result: Result; fase: Fase }) {
           </p>
         )}
       </div>
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent via-paper/90 to-paper" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-linear-to-b from-transparent via-paper/90 to-paper" />
     </div>
   );
 }
