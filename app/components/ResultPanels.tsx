@@ -26,11 +26,13 @@ const fiabilidadColor: Record<string, string> = {
 export function PortadaPanel({ children }: { children?: React.ReactNode }) {
   return (
     <div className="relative h-full w-full overflow-hidden bg-ink">
-      <img src="/portada.jpg" alt="" className="h-full w-full object-cover object-[center_45%]" />
+      {/* La imagen es vertical (2:3) y el panel casi cuadrado: con el recorte
+          centrado se cortan los pies de la vasija; al 72 % sale entera. */}
+      <img src="/portada.jpg" alt="" className="h-full w-full object-cover object-[50%_72%]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-linear-to-b from-ink/70 to-transparent" />
-      <div className="absolute left-4 top-4 flex flex-col gap-1 text-paper drop-shadow-md">
+      <div className="pointer-events-none absolute inset-x-16 top-5 flex flex-col items-center gap-1 text-center text-paper drop-shadow-md">
         <h1 className="font-brush text-2xl font-bold leading-tight">China History</h1>
-        <p className="text-sm font-semibold tracking-wide opacity-90">Elige un lugar y un año</p>
+        <p className="text-sm font-semibold tracking-wide opacity-90">Everywhere everytime</p>
       </div>
       {children}
     </div>
