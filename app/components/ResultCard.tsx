@@ -10,13 +10,17 @@ export type Result = {
   imagen_url: string | null;
 };
 
+// escribiendo: el texto está llegando token a token; ilustrando: texto
+// completo, esperando la imagen; listo: no hay nada en curso.
+export type Fase = 'escribiendo' | 'ilustrando' | 'listo';
+
 const fiabilidadColor: Record<string, string> = {
   alta: '#2e7d32',
   media: '#f9a825',
   baja: '#c62828',
 };
 
-export default function ResultCard({ result }: { result: Result | null }) {
+export default function ResultCard({ result, fase = 'listo' }: { result: Result | null; fase?: Fase }) {
   const [expanded, setExpanded] = useState(false);
 
   if (!result) return null;
@@ -60,15 +64,24 @@ export default function ResultCard({ result }: { result: Result | null }) {
             className="max-h-48 w-full rounded-lg object-cover"
           />
         ) : (
-          <div className="flex h-32 w-full items-center justify-center rounded-lg border border-dashed border-line text-xs text-stone">
-            Sin imagen todavía
+          <div
+            className={`flex h-32 w-full items-center justify-center rounded-lg border border-dashed border-line text-xs text-stone ${
+              fase !== 'listo' ? 'animate-pulse' : ''
+            }`}
+          >
+            {fase === 'listo' ? 'Sin imagen' : 'Generando imagen...'}
           </div>
         )}
       </div>
 
       {/* Zona de texto: la única con scroll propio, crece con "expanded". */}
       <div className="min-h-0 flex-1 overflow-y-auto p-4 pt-2">
-        <p className="text-sm text-ink-soft">{result.contexto_ambiental}</p>
+        <p className="whitespace-pre-line text-sm text-ink-soft">
+          {result.contexto_ambiental}
+          {fase === 'escribiendo' && (
+            <span className="ml-0.5 inline-block h-3.5 w-0.5 animate-pulse bg-seal align-middle" aria-hidden />
+          )}
+        </p>
         {result.hito?.existe && (
           <p className="mt-1 text-sm" style={{ color: fiabilidadColor[result.hito.fiabilidad] || '#666' }}>
             🔹 {result.hito.descripcion} (fiabilidad: {result.hito.fiabilidad})

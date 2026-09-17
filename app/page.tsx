@@ -2,7 +2,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import MapView from './components/MapView';
 import DynastyTimeline, { formatYear, segmentAt } from './components/DynastyTimeline';
-import ResultCard, { type Result } from './components/ResultCard';
+import ResultCard, { type Fase, type Result } from './components/ResultCard';
 import UsagePanel from './components/UsagePanel';
 
 // En local usa el backend de tu máquina; en producción, configura
@@ -82,15 +82,98 @@ export default function Home() {
   const [pickedPlace, setPickedPlace] = useState<string | null>(null);
   const [hasPicked, setHasPicked] = useState(false);
 
+  // Fase de la consulta en curso, para que la tarjeta muestre "escribiendo"
+  // (cursor al final del texto) o "generando imagen" mientras llegan datos.
+  const [fase, setFase] = useState<Fase>('listo');
+
   // Guardamos las coordenadas del último clic en el mapa para relanzar
-  // búsqueda automáticamente cuando se arrastra el slider de tiempo.
+  // búsqueda automáticamente cuando se mueve el slider de tiempo.
   const lastClickCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+
+  // year/model/length en refs para que `consultar` sea estable (no cambie de
+  // identidad en cada render) y aun así lea siempre los valores actuales.
+  const yearRef = useRef(year);
+  const modelRef = useRef(model);
+  const lengthRef = useRef(length);
+  yearRef.current = year;
+  modelRef.current = model;
+  lengthRef.current = length;
 
   const liveMockResult = useMemo(
     () => (hasPicked ? mockResult(year, pickedPlace) : null),
     [hasPicked, year, pickedPlace],
   );
   const displayResult = BACKEND_ENABLED ? result : liveMockResult;
+
+  // La consulta llega por Server-Sent Events: "lugar" nada más geocodificar,
+  // "texto" token a token mientras Claude escribe, "contexto" con el texto
+  // definitivo, "hito", "imagen" (base64, la más lenta) y "done".
+  const consultar = useCallback((lat: number, lng: number) => {
+    eventSourceRef.current?.close();
+    setNotice(null);
+    setResult(null);
+    setLoading(true);
+
+    const params = new URLSearchParams({
+      lat: String(lat),
+      lng: String(lng),
+      year: String(yearRef.current),
+      model: modelRef.current,
+      length: lengthRef.current,
+    });
+    const es = new EventSource(`${API_URL}/historical-agent/stream?${params}`);
+    eventSourceRef.current = es;
+    let terminado = false;
+    const cerrar = () => {
+      terminado = true;
+      es.close();
+      if (eventSourceRef.current === es) eventSourceRef.current = null;
+    };
+    const leer = <T,>(e: MessageEvent): T => JSON.parse(e.data) as T;
+
+    es.addEventListener('lugar', (e) => {
+      const { lugar, año } = leer<{ lugar: string; año: string }>(e);
+      setResult({ lugar, año, contexto_ambiental: '', hito: null, imagen_url: null });
+      setLoading(false);
+      setFase('escribiendo');
+    });
+    es.addEventListener('texto', (e) => {
+      const { delta } = leer<{ delta: string }>(e);
+      setResult((r) => (r ? { ...r, contexto_ambiental: r.contexto_ambiental + delta } : r));
+    });
+    es.addEventListener('contexto', (e) => {
+      const { texto } = leer<{ texto: string }>(e);
+      setResult((r) => (r ? { ...r, contexto_ambiental: texto } : r));
+      setFase('ilustrando');
+    });
+    es.addEventListener('hito', (e) => {
+      const { hito } = leer<{ hito: Result['hito'] }>(e);
+      setResult((r) => (r ? { ...r, hito } : r));
+    });
+    es.addEventListener('imagen', (e) => {
+      const { url } = leer<{ url: string | null }>(e);
+      setResult((r) => (r ? { ...r, imagen_url: url } : r));
+    });
+    es.addEventListener('done', () => {
+      cerrar();
+      setFase('listo');
+    });
+    es.addEventListener('fallo', (e) => {
+      const { mensaje } = leer<{ mensaje: string }>(e);
+      cerrar();
+      setLoading(false);
+      setFase('listo');
+      setNotice(mensaje);
+    });
+    es.onerror = () => {
+      if (terminado) return;
+      cerrar();
+      setLoading(false);
+      setFase('listo');
+      setNotice('No se ha podido conectar con el backend.');
+    };
+  }, []);
 
   const handleMapClick = useCallback(async (lat: number, lng: number) => {
     lastClickCoordsRef.current = { lat, lng };
@@ -104,45 +187,20 @@ export default function Home() {
       setLoading(false);
       return;
     }
+    consultar(lat, lng);
+  }, [consultar]);
 
-    setNotice(null);
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `${API_URL}/historical-agent/query?lat=${lat}&lng=${lng}&year=${year}&model=${model}&length=${length}`,
-      );
-      const data = await res.json();
-      setResult(data);
-    } catch (err) {
-      console.error('Error al consultar el backend:', err);
-      setNotice('No se ha podido conectar con el backend.');
-    } finally {
-      setLoading(false);
-    }
-  }, [year, model, length]);
-
-  // Cuando cambia el año en el slider (y hay un punto ya seleccionado),
-  // relanza búsqueda automáticamente.
+  // Al mover el slider con un punto ya elegido se repite la consulta para el
+  // nuevo año — pero no en cada paso del arrastre (cada consulta son varias
+  // búsquedas web y una imagen), sino cuando el año lleva un momento quieto.
   useEffect(() => {
-    if (lastClickCoordsRef.current && result) {
-      (async () => {
-        setNotice(null);
-        setLoading(true);
-        try {
-          const res = await fetch(
-            `${API_URL}/historical-agent/query?lat=${lastClickCoordsRef.current!.lat}&lng=${lastClickCoordsRef.current!.lng}&year=${year}&model=${model}&length=${length}`,
-          );
-          const data = await res.json();
-          setResult(data);
-        } catch (err) {
-          console.error('Error al consultar el backend:', err);
-          setNotice('No se ha podido conectar con el backend.');
-        } finally {
-          setLoading(false);
-        }
-      })();
-    }
-  }, [year]);
+    if (!BACKEND_ENABLED || !lastClickCoordsRef.current) return;
+    const { lat, lng } = lastClickCoordsRef.current;
+    const timer = setTimeout(() => consultar(lat, lng), 600);
+    return () => clearTimeout(timer);
+  }, [year, consultar]);
+
+  useEffect(() => () => eventSourceRef.current?.close(), []);
 
   return (
     <main className="relative h-dvh w-full overflow-hidden">
@@ -167,7 +225,7 @@ export default function Home() {
                 {notice}
               </p>
             )}
-            {!loading && !notice && <ResultCard result={displayResult} />}
+            {!loading && !notice && <ResultCard result={displayResult} fase={fase} />}
           </div>
         </div>
       )}
