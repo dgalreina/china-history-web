@@ -49,7 +49,7 @@ export function ImagenPanel({ result, fase, children }: { result: Result; fase: 
   return (
     <div className="relative h-full w-full overflow-hidden bg-paper-dark">
       {result.imagen_url ? (
-        <img src={result.imagen_url} alt={`Reconstrucción de ${result.lugar}, ${result.año}`} className="h-full w-full object-cover" />
+        <img src={result.imagen_url} alt={`Reconstrucción de ${result.lugar}, ${result.año}`} className="panoramica h-full w-full object-cover" />
       ) : (
         <div className={`flex h-full w-full items-center justify-center text-sm text-stone ${fase === 'listo' ? '' : 'animate-pulse'}`}>
           {fase === 'listo' ? 'Sin imagen' : 'Generando imagen...'}
