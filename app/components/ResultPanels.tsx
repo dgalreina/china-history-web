@@ -51,38 +51,31 @@ export function ImagenPanel({ result, fase, children }: { result: Result; fase: 
   // Al cambiar de lugar/año la imagen nueva tarda; en vez de dejar un hueco
   // vacío de golpe, se conserva la última imagen vista de fondo (atenuada
   // bajo el velo) hasta que llega la siguiente — el salto brusco era pasar
-  // de "imagen" a "nada", no de "nada" a "imagen nueva".
+  // de "imagen" a "nada", no de "nada" a "imagen nueva". En la primerísima
+  // consulta de la sesión no hay ninguna imagen anterior: se usa la propia
+  // portada como fondo en su lugar, para no dejar un panel negro vacío.
   const ultimaImagenRef = useRef<string | null>(null);
   useEffect(() => {
     if (result.imagen_url) ultimaImagenRef.current = result.imagen_url;
   }, [result.imagen_url]);
-  const imagenDeFondo = result.imagen_url ?? ultimaImagenRef.current;
+  const imagenDeFondo = result.imagen_url ?? ultimaImagenRef.current ?? '/portada.jpg';
+  const esPortada = imagenDeFondo === '/portada.jpg';
   const generandoImagen = fase !== 'listo' && !result.imagen_url;
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-paper-dark">
-      {imagenDeFondo ? (
-        <img
-          key={imagenDeFondo}
-          src={imagenDeFondo}
-          alt={`Reconstrucción de ${result.lugar}, ${result.año}`}
-          className={`panoramica h-full w-full object-cover transition-[filter] duration-500 ${generandoImagen ? 'blur-[3px] brightness-75' : ''}`}
-        />
-      ) : (
-        // Sin ninguna imagen previa (la primera consulta de la sesión): un
-        // fondo oscuro para que el velo se vea igual de definido que
-        // cuando sí hay una foto detrás, en vez de un gris plano.
-        <div className="h-full w-full bg-ink" />
-      )}
+    <div className="relative h-full w-full overflow-hidden bg-ink">
+      <img
+        key={imagenDeFondo}
+        src={imagenDeFondo}
+        alt={esPortada ? '' : `Reconstrucción de ${result.lugar}, ${result.año}`}
+        className={`h-full w-full object-cover transition-[filter] duration-500 ${esPortada ? 'object-[50%_80%]' : 'panoramica'} ${generandoImagen ? 'blur-[3px] brightness-75' : ''}`}
+      />
 
       {generandoImagen && (
         <div className="absolute inset-0 flex items-center justify-center bg-ink/35">
           <VasijaSpinner className="h-14 w-14 text-paper" />
           <span className="sr-only">Generando imagen…</span>
         </div>
-      )}
-      {!imagenDeFondo && !generandoImagen && (
-        <div className="flex h-full w-full items-center justify-center text-sm text-stone">Sin imagen</div>
       )}
 
       <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-linear-to-b from-ink/70 to-transparent" />
