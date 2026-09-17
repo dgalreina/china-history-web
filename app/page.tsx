@@ -4,6 +4,7 @@ import MapView from './components/MapView';
 import DynastyTimeline, { segmentAt } from './components/DynastyTimeline';
 import { ImagenPanel, PortadaPanel, TextoPanel, type Fase, type Result } from './components/ResultPanels';
 import UsagePanel from './components/UsagePanel';
+import StyleSelector, { type ImageStyle } from './components/StyleSelector';
 
 // En local usa el backend de tu máquina; en producción, configura
 // NEXT_PUBLIC_API_URL en las variables de entorno de DigitalOcean con la
@@ -80,6 +81,7 @@ export default function Home() {
   // sesiones (localStorage), es una elección de "voy a probar esto ahora".
   const [model, setModel] = useState<ModelChoice>('sonnet');
   const [length, setLength] = useState<LengthChoice>('corto');
+  const [style, setStyle] = useState<ImageStyle>('fotorrealista');
 
   // Para la tarjeta simulada guardamos solo el lugar del último clic: el
   // año/dinastía se recalculan en cada render a partir de `year`, así la
@@ -103,11 +105,13 @@ export default function Home() {
   const yearRef = useRef(year);
   const modelRef = useRef(model);
   const lengthRef = useRef(length);
+  const styleRef = useRef(style);
   useEffect(() => {
     yearRef.current = year;
     modelRef.current = model;
     lengthRef.current = length;
-  }, [year, model, length]);
+    styleRef.current = style;
+  }, [year, model, length, style]);
 
   const liveMockResult = useMemo(
     () => (hasPicked ? mockResult(year, pickedPlace) : null),
@@ -131,6 +135,7 @@ export default function Home() {
       year: String(yearRef.current),
       model: modelRef.current,
       length: lengthRef.current,
+      style: styleRef.current,
     });
     const es = new EventSource(`${API_URL}/historical-agent/stream?${params}`);
     eventSourceRef.current = es;
@@ -213,6 +218,10 @@ export default function Home() {
   useEffect(() => () => eventSourceRef.current?.close(), []);
 
   const hayResultado = displayResult !== null;
+  // El estilo vive como acceso directo en la esquina superior de la foto
+  // (se cambia a menudo); las métricas, que se consultan poco, bajan a la
+  // esquina inferior.
+  const styleSelector = <StyleSelector style={style} onStyleChange={setStyle} />;
   const usagePanel = (
     <UsagePanel apiUrl={API_URL} model={model} length={length} onModelChange={setModel} onLengthChange={setLength} />
   );
@@ -225,11 +234,13 @@ export default function Home() {
       <div className="absolute inset-x-0 top-0 h-1/2 md:inset-y-0 md:h-full md:w-1/2">
         {hayResultado ? (
           <ImagenPanel result={displayResult} fase={fase}>
-            <div className="absolute right-4 top-4">{usagePanel}</div>
+            <div className="absolute right-4 top-4">{styleSelector}</div>
+            <div className="absolute bottom-4 right-4">{usagePanel}</div>
           </ImagenPanel>
         ) : (
           <PortadaPanel>
-            <div className="absolute right-4 top-4">{usagePanel}</div>
+            <div className="absolute right-4 top-4">{styleSelector}</div>
+            <div className="absolute bottom-4 right-4">{usagePanel}</div>
           </PortadaPanel>
         )}
       </div>
