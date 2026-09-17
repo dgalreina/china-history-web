@@ -12,7 +12,22 @@ type Usage = {
   limites: { mapLoads: number; geocodeCalls: number; tavilySearches: number };
 };
 
-export default function UsagePanel({ apiUrl }: { apiUrl: string }) {
+type ModelChoice = 'sonnet' | 'haiku';
+type LengthChoice = 'extenso' | 'corto';
+
+export default function UsagePanel({
+  apiUrl,
+  model,
+  length,
+  onModelChange,
+  onLengthChange,
+}: {
+  apiUrl: string;
+  model: ModelChoice;
+  length: LengthChoice;
+  onModelChange: (model: ModelChoice) => void;
+  onLengthChange: (length: LengthChoice) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [usage, setUsage] = useState<Usage | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,7 +52,7 @@ export default function UsagePanel({ apiUrl }: { apiUrl: string }) {
       <button
         type="button"
         onClick={abrir}
-        aria-label="Ver consumo de APIs"
+        aria-label="Ver consumo y ajustes"
         className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full bg-ink text-paper shadow"
       >
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -56,17 +71,42 @@ export default function UsagePanel({ apiUrl }: { apiUrl: string }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h2 className="font-brush text-lg font-semibold">Consumo</h2>
+              <h2 className="font-brush text-lg font-semibold">Consumo y ajustes</h2>
               <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar" className="text-ink-soft">
                 ✕
               </button>
             </div>
 
-            {loading && <p className="mt-3 text-sm text-ink-soft">Cargando...</p>}
-            {error && <p className="mt-3 text-sm text-ink-soft">{error}</p>}
+            <div className="mt-4 space-y-3 text-sm">
+              <div>
+                <p className="mb-1 font-semibold">Modelo</p>
+                <div className="flex gap-2">
+                  <ToggleButton etiqueta="Sonnet" activo={model === 'sonnet'} onClick={() => onModelChange('sonnet')} />
+                  <ToggleButton etiqueta="Haiku" activo={model === 'haiku'} onClick={() => onModelChange('haiku')} />
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-1 font-semibold">Longitud del texto</p>
+                <div className="flex gap-2">
+                  <ToggleButton etiqueta="Corto" activo={length === 'corto'} onClick={() => onLengthChange('corto')} />
+                  <ToggleButton etiqueta="Extenso" activo={length === 'extenso'} onClick={() => onLengthChange('extenso')} />
+                </div>
+              </div>
+
+              <p className="text-xs text-ink-soft">
+                Se aplica al próximo clic en el mapa. Sonnet corto es lo más rápido; Haiku extenso escribe más pero
+                menos ajustado a lo pedido.
+              </p>
+            </div>
+
+            <hr className="my-4 border-line" />
+
+            {loading && <p className="text-sm text-ink-soft">Cargando consumo...</p>}
+            {error && <p className="text-sm text-ink-soft">{error}</p>}
 
             {usage && !loading && (
-              <div className="mt-4 space-y-3 text-sm">
+              <div className="space-y-3 text-sm">
                 <Fila etiqueta="Cargas de mapa (Mapbox)" valor={usage.mapLoads} limite={usage.limites.mapLoads} />
                 <Fila etiqueta="Geocodificación (Mapbox)" valor={usage.geocodeCalls} limite={usage.limites.geocodeCalls} />
                 <Fila etiqueta="Búsquedas (Tavily)" valor={usage.tavilySearches} limite={usage.limites.tavilySearches} />
@@ -87,6 +127,20 @@ export default function UsagePanel({ apiUrl }: { apiUrl: string }) {
         </div>
       )}
     </>
+  );
+}
+
+function ToggleButton({ etiqueta, activo, onClick }: { etiqueta: string; activo: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+        activo ? 'border-seal bg-seal text-paper' : 'border-line bg-transparent text-ink-soft'
+      }`}
+    >
+      {etiqueta}
+    </button>
   );
 }
 

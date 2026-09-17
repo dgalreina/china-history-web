@@ -28,13 +28,19 @@ async function reverseGeocode(lat: number, lng: number): Promise<string | null> 
       `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?types=locality,place&language=es&access_token=${token}`,
     );
     const data = await res.json();
-    const features: { text?: string }[] = data?.features ?? [];
+    const features: { text?: string; context?: { id: string; text?: string }[] }[] = data?.features ?? [];
     // Algunas "locality" chinas le llegan a Mapbox sin traducir del todo
-    // (p. ej. "district de Mudan": tradujo la plantilla pero no la palabra
-    // "district"). Si pasa, mejor caer a la siguiente feature (la "place"
-    // que la engloba) que enseñar ese texto a medio traducir.
-    const clean = features.find((f) => f.text && !/\bdistrict\b/i.test(f.text));
-    return (clean ?? features[0])?.text ?? null;
+    // (p. ej. "district de Mudan", "xian de Xingye" = "condado de Xingye").
+    // Si pasa, mejor caer a la siguiente feature (la "place" que la engloba)
+    // que enseñar ese texto a medio traducir.
+    const clean = features.find((f) => f.text && !/\b(district|xian)\b/i.test(f.text));
+    const feature = clean ?? features[0];
+    if (!feature?.text) return null;
+
+    // Nombres como "Yulin" existen en varias provincias a la vez — sin la
+    // provincia, el nombre solo puede referirse al sitio equivocado.
+    const region = feature.context?.find((c) => c.id.startsWith('region.'))?.text;
+    return region ? `${feature.text}, ${region}` : feature.text;
   } catch {
     return null;
   }
@@ -55,11 +61,20 @@ function mockResult(year: number, placeName: string | null) {
   };
 }
 
+type ModelChoice = 'sonnet' | 'haiku';
+type LengthChoice = 'extenso' | 'corto';
+
 export default function Home() {
   const [year, setYear] = useState(1900);
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+
+  // Preferencia del usuario para el modelo/longitud de la síntesis — se
+  // manda al backend en cada consulta. No hace falta persistirla entre
+  // sesiones (localStorage), es una elección de "voy a probar esto ahora".
+  const [model, setModel] = useState<ModelChoice>('sonnet');
+  const [length, setLength] = useState<LengthChoice>('corto');
 
   // Para la tarjeta simulada guardamos solo el lugar del último clic: el
   // año/dinastía se recalculan en cada render a partir de `year`, así la
@@ -88,7 +103,9 @@ export default function Home() {
     setNotice(null);
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/historical-agent/query?lat=${lat}&lng=${lng}&year=${year}`);
+      const res = await fetch(
+        `${API_URL}/historical-agent/query?lat=${lat}&lng=${lng}&year=${year}&model=${model}&length=${length}`,
+      );
       const data = await res.json();
       setResult(data);
     } catch (err) {
@@ -97,7 +114,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, [year]);
+  }, [year, model, length]);
 
   return (
     <main className="relative h-dvh w-full overflow-hidden">
@@ -107,12 +124,6 @@ export default function Home() {
         <h1 className="pointer-events-none absolute left-4 top-4 font-brush text-lg font-semibold tracking-wide text-paper drop-shadow-md sm:left-6 sm:top-6">
           China History
         </h1>
-      )}
-
-      {!loading && !displayResult && !notice && (
-        <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
-          <UsagePanel apiUrl={API_URL} />
-        </div>
       )}
 
       {(loading || displayResult || notice) && (
@@ -135,6 +146,10 @@ export default function Home() {
 
       <div className="pointer-events-auto absolute inset-x-6 bottom-16 sm:inset-x-10">
         <DynastyTimeline year={year} onChange={setYear} />
+      </div>
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center">
+        <UsagePanel apiUrl={API_URL} model={model} length={length} onModelChange={setModel} onLengthChange={setLength} />
       </div>
     </main>
   );
