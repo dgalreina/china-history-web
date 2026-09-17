@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { formatYear, segmentAt } from './DynastyTimeline';
+import VasijaSpinner from './VasijaSpinner';
 
 export type Result = {
   lugar: string;
@@ -46,14 +48,38 @@ export function ImagenPanel({ result, fase, children }: { result: Result; fase: 
   const year = Number(result.año);
   const dinastia = Number.isFinite(year) ? segmentAt(year).label : null;
 
+  // Al cambiar de lugar/año la imagen nueva tarda; en vez de dejar un hueco
+  // vacío de golpe, se conserva la última imagen vista de fondo (atenuada
+  // bajo el velo) hasta que llega la siguiente — el salto brusco era pasar
+  // de "imagen" a "nada", no de "nada" a "imagen nueva".
+  const ultimaImagenRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (result.imagen_url) ultimaImagenRef.current = result.imagen_url;
+  }, [result.imagen_url]);
+  const imagenDeFondo = result.imagen_url ?? ultimaImagenRef.current;
+  const generandoImagen = fase !== 'listo' && !result.imagen_url;
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-paper-dark">
-      {result.imagen_url ? (
-        <img src={result.imagen_url} alt={`Reconstrucción de ${result.lugar}, ${result.año}`} className="panoramica h-full w-full object-cover" />
+      {imagenDeFondo ? (
+        <img
+          key={imagenDeFondo}
+          src={imagenDeFondo}
+          alt={`Reconstrucción de ${result.lugar}, ${result.año}`}
+          className={`panoramica h-full w-full object-cover transition-[filter] duration-500 ${generandoImagen ? 'blur-[3px] brightness-75' : ''}`}
+        />
       ) : (
-        <div className={`flex h-full w-full items-center justify-center text-sm text-stone ${fase === 'listo' ? '' : 'animate-pulse'}`}>
-          {fase === 'listo' ? 'Sin imagen' : 'Generando imagen...'}
+        <div className="h-full w-full" />
+      )}
+
+      {generandoImagen && (
+        <div className="absolute inset-0 flex items-center justify-center bg-ink/35">
+          <VasijaSpinner className="h-14 w-14 text-paper" />
+          <span className="sr-only">Generando imagen…</span>
         </div>
+      )}
+      {!imagenDeFondo && !generandoImagen && (
+        <div className="flex h-full w-full items-center justify-center text-sm text-stone">Sin imagen</div>
       )}
 
       <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-linear-to-b from-ink/70 to-transparent" />

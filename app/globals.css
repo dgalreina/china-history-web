@@ -57,6 +57,21 @@ body {
   }
 }
 
+/* Spinner con la silueta de la vasija (ver VasijaSpinner.tsx): el
+   dasharray "28 100" deja un segmento visible de ~28% del contorno, que
+   recorre el perímetro completo desplazando el offset una vuelta entera. */
+@keyframes vasija-girar {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+.animate-vasija-girar {
+  animation: vasija-girar 1.4s linear infinite;
+}
+
 .sin-scrollbar {
   scrollbar-width: none;
 }
