@@ -6,10 +6,46 @@ import { CHINA_BOUNDS, CHINA_MASK_GEOJSON, isInsideChina } from '../lib/chinaBou
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
-export default function MapView({ onClick, apiUrl }: { onClick: (lat: number, lng: number) => void; apiUrl: string }) {
+export default function MapView({
+  onClick,
+  apiUrl,
+  focus,
+}: {
+  onClick: (lat: number, lng: number) => void;
+  apiUrl: string;
+  focus: { lat: number; lng: number } | null;
+}) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
+
+  // El contenedor cambia de tamaño cuando aparece el panel de la imagen
+  // (pantalla completa → media pantalla). Mapbox solo reacciona al resize de
+  // la ventana, no del contenedor, así que se lo avisamos; y como al
+  // redimensionar ancla la esquina superior (el centro se desplaza), después
+  // se vuelve a centrar en el punto pulsado.
+  const focusRef = useRef(focus);
+  useEffect(() => {
+    focusRef.current = focus;
+  }, [focus]);
+  useEffect(() => {
+    const el = mapContainer.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => {
+      const map = mapRef.current;
+      if (!map) return;
+      map.resize();
+      const f = focusRef.current;
+      if (f) map.jumpTo({ center: [f.lng, f.lat] });
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!focus) return;
+    mapRef.current?.easeTo({ center: [focus.lng, focus.lat], duration: 600 });
+  }, [focus]);
 
   // `onClick` cambia de identidad en cada render de la página (p. ej. al
   // mover el slider de año), pero el mapa no debe recrearse por eso — solo

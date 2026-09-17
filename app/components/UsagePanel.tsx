@@ -53,9 +53,9 @@ export default function UsagePanel({
         type="button"
         onClick={abrir}
         aria-label="Ver consumo y ajustes"
-        className="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full bg-ink text-paper shadow"
+        className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full border border-paper/35 bg-ink/55 text-paper backdrop-blur-sm"
       >
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 3v18h18" />
           <path d="M7 15l4-6 3 3 5-8" />
         </svg>

@@ -34,6 +34,13 @@ body {
   color: var(--color-ink);
 }
 
+.sin-scrollbar {
+  scrollbar-width: none;
+}
+.sin-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Amplía la zona de agarre real del slider de año sin tocar nada visual:
    el thumb nativo (invisible) es del tamaño mínimo recomendado (44px)
    para que sea fácil de coger con el dedo, aunque la línea que se ve
