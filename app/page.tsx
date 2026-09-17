@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import MapView from './components/MapView';
 import DynastyTimeline, { formatYear, segmentAt } from './components/DynastyTimeline';
 import ResultCard, { type Result } from './components/ResultCard';
@@ -82,6 +82,10 @@ export default function Home() {
   const [pickedPlace, setPickedPlace] = useState<string | null>(null);
   const [hasPicked, setHasPicked] = useState(false);
 
+  // Guardamos las coordenadas del último clic en el mapa para relanzar
+  // búsqueda automáticamente cuando se arrastra el slider de tiempo.
+  const lastClickCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
+
   const liveMockResult = useMemo(
     () => (hasPicked ? mockResult(year, pickedPlace) : null),
     [hasPicked, year, pickedPlace],
@@ -89,6 +93,7 @@ export default function Home() {
   const displayResult = BACKEND_ENABLED ? result : liveMockResult;
 
   const handleMapClick = useCallback(async (lat: number, lng: number) => {
+    lastClickCoordsRef.current = { lat, lng };
     if (!BACKEND_ENABLED) {
       setNotice(null);
       setHasPicked(false);
@@ -115,6 +120,29 @@ export default function Home() {
       setLoading(false);
     }
   }, [year, model, length]);
+
+  // Cuando cambia el año en el slider (y hay un punto ya seleccionado),
+  // relanza búsqueda automáticamente.
+  useEffect(() => {
+    if (lastClickCoordsRef.current && result) {
+      (async () => {
+        setNotice(null);
+        setLoading(true);
+        try {
+          const res = await fetch(
+            `${API_URL}/historical-agent/query?lat=${lastClickCoordsRef.current!.lat}&lng=${lastClickCoordsRef.current!.lng}&year=${year}&model=${model}&length=${length}`,
+          );
+          const data = await res.json();
+          setResult(data);
+        } catch (err) {
+          console.error('Error al consultar el backend:', err);
+          setNotice('No se ha podido conectar con el backend.');
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }
+  }, [year]);
 
   return (
     <main className="relative h-dvh w-full overflow-hidden">
