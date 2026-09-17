@@ -9,11 +9,28 @@ type Usage = {
   anthropicInputTokens: number;
   anthropicOutputTokens: number;
   anthropicRequests: number;
+  openaiInputTokens: number;
+  openaiOutputTokens: number;
+  openaiImages: number;
   limites: { mapLoads: number; geocodeCalls: number; tavilySearches: number };
 };
 
 type ModelChoice = 'sonnet' | 'haiku';
 type LengthChoice = 'extenso' | 'corto';
+
+// gpt-image-2.5-flare no publica precio por token desglosado (input/output)
+// como sí hace dall-e-*. Esta tarifa es una aproximación gruesa: gasto total
+// entre tokens totales que el propio usuario vio en su cuenta de OpenAI
+// (2,12 $ / 9.182 tokens, 2026-09-17) — mezcla llamadas de distintos tamaños
+// de imagen y no diferencia entrada de salida, así que solo sirve para
+// hacerse una idea, no como coste exacto.
+const APROX_USD_POR_MILLON_TOKENS_OPENAI = 231;
+const APROX_USD_A_EUR = 0.92;
+
+function costeAproxEur(inputTokens: number, outputTokens: number): string {
+  const eur = ((inputTokens + outputTokens) / 1_000_000) * APROX_USD_POR_MILLON_TOKENS_OPENAI * APROX_USD_A_EUR;
+  return eur.toLocaleString('es', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 });
+}
 
 export default function UsagePanel({
   apiUrl,
@@ -116,6 +133,20 @@ export default function UsagePanel({
                   <p className="mt-1 text-ink-soft">{usage.anthropicRequests.toLocaleString('es')} llamadas</p>
                   <p className="text-ink-soft">{usage.anthropicInputTokens.toLocaleString('es')} tokens de entrada</p>
                   <p className="text-ink-soft">{usage.anthropicOutputTokens.toLocaleString('es')} tokens de salida</p>
+                </div>
+
+                <div className="rounded-lg border border-line p-3">
+                  <p className="font-semibold">OpenAI (imágenes)</p>
+                  <p className="mt-1 text-ink-soft">{usage.openaiImages.toLocaleString('es')} imágenes generadas</p>
+                  <p className="text-ink-soft">{usage.openaiInputTokens.toLocaleString('es')} tokens de entrada</p>
+                  <p className="text-ink-soft">{usage.openaiOutputTokens.toLocaleString('es')} tokens de salida</p>
+                  <p className="mt-1 font-semibold text-seal">
+                    ≈ {costeAproxEur(usage.openaiInputTokens, usage.openaiOutputTokens)} aprox.
+                  </p>
+                  <p className="mt-1 text-xs text-ink-soft">
+                    Estimación muy aproximada (no hay precio oficial por token publicado) — compara con el gasto
+                    real en <span className="whitespace-nowrap">platform.openai.com/usage</span>.
+                  </p>
                 </div>
 
                 <p className="text-xs text-ink-soft">
