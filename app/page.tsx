@@ -65,7 +65,8 @@ type ModelChoice = 'sonnet' | 'haiku';
 type LengthChoice = 'extenso' | 'corto';
 
 export default function Home() {
-  const [year, setYear] = useState(1900);
+  // El slider va de -2000 a 2000: el año 0 lo deja en el centro de la barra.
+  const [year, setYear] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
