@@ -35,7 +35,6 @@ export function PortadaPanel({ children }: { children?: React.ReactNode }) {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-linear-to-b from-ink/70 to-transparent" />
       <div className="pointer-events-none absolute inset-x-16 top-5 flex flex-col items-center gap-1 text-center text-paper drop-shadow-md">
         <h1 className="font-brush text-2xl font-bold leading-tight">China History</h1>
-        <p className="text-sm font-semibold tracking-wide opacity-90">Everywhere everytime</p>
       </div>
       {children}
     </div>

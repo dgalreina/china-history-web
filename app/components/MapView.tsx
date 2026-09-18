@@ -61,9 +61,13 @@ export default function MapView({
     const map = new mapboxgl.Map({
       container: mapContainer.current!,
       style: 'mapbox://styles/mapbox/satellite-streets-v12',
-      center: [116.4, 39.9], // Beijing
-      zoom: 4,
-      maxZoom: 8, // evita acercarse tanto como para reconocer ciudades/carreteras modernas
+      center: [103.8, 32], // más centrado en China que Beijing, para el encuadre inicial
+      // Al abrir, se ve China entera de un vistazo — con maxBounds fijo,
+      // Mapbox no deja bajar de un zoom mínimo según el tamaño del
+      // contenedor (media pantalla), así que cualquier valor por debajo
+      // de ese límite da el mismo resultado; 2.2 ya lo alcanza.
+      zoom: 2.2,
+      maxZoom: 11, // ya sin carreteras/nombres modernos visibles (ver style.load), se puede acercar más
       maxBounds: CHINA_BOUNDS, // no se puede arrastrar el mapa fuera de China
     });
 
