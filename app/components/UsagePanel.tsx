@@ -93,16 +93,17 @@ export default function UsagePanel({
           onClick={() => setOpen(false)}
         >
           <div
-            className="w-full max-w-sm rounded-xl border border-line bg-paper p-5 text-ink shadow-xl"
+            className="flex max-h-[85vh] w-full max-w-sm flex-col rounded-xl border border-line bg-paper text-ink shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between px-5 pt-5">
               <h2 className="font-brush text-lg font-semibold">Consumo y ajustes</h2>
               <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar" className="text-ink-soft">
                 ✕
               </button>
             </div>
 
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
             <div className="mt-4 space-y-3 text-sm">
               <div>
                 <p className="mb-1 font-semibold">Modelo (texto)</p>
@@ -182,6 +183,7 @@ export default function UsagePanel({
                 </p>
               </div>
             )}
+            </div>
           </div>
         </div>
       )}

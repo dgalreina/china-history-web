@@ -287,13 +287,13 @@ export default function Home() {
         )}
 
         {hayResultado && (
-          <div className="absolute right-3 top-3 z-10 flex rounded-full border border-line bg-paper/95 p-0.75 shadow">
+          <div className="absolute right-3 top-3 z-10 flex rounded-full border border-line bg-paper/80 p-0.5 shadow-sm backdrop-blur-sm">
             {(['mapa', 'texto'] as const).map((v) => (
               <button
                 key={v}
                 type="button"
                 onClick={() => setVista(v)}
-                className={`h-7.5 rounded-full px-3.5 text-xs font-bold ${
+                className={`h-5.5 rounded-full px-2.5 text-[10px] font-bold ${
                   vista === v ? 'bg-ink text-paper' : 'text-ink-soft'
                 }`}
               >

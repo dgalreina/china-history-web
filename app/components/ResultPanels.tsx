@@ -92,16 +92,19 @@ export function ImagenPanel({ result, fase, children }: { result: Result; fase: 
 }
 
 // Mitad del texto: hace scroll por debajo de la barra de tiempo (la página
-// deja el hueco con `paddingBottom`) y se difumina al llegar a ella.
+// deja el hueco con `paddingBottom`) y se difumina al llegar a ella. El
+// conmutador Mapa/Texto flota arriba (ver page.tsx) — el hueco se deja con
+// `pt`, no con un padding lateral asimétrico, así el texto queda centrado
+// con el mismo margen a los dos lados.
 export function TextoPanel({ result, fase }: { result: Result; fase: Fase }) {
   return (
     <div className="relative h-full w-full bg-paper">
       <div
-        className={`sin-scrollbar h-full overflow-y-auto px-4 pb-32 pt-4 text-sm leading-relaxed text-ink-soft ${
+        className={`sin-scrollbar h-full overflow-y-auto px-4 pb-32 pt-12 text-sm leading-relaxed text-ink-soft ${
           fase === 'cargando' ? 'opacity-50' : ''
         }`}
       >
-        <p className="whitespace-pre-line pr-28">
+        <p className="whitespace-pre-line">
           {result.contexto_ambiental}
           {fase === 'escribiendo' && (
             <span className="ml-0.5 inline-block h-3.5 w-0.5 animate-pulse bg-seal align-middle" aria-hidden />
