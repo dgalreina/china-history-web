@@ -35,14 +35,18 @@ function costeAproxEur(inputTokens: number, outputTokens: number): string {
 export default function UsagePanel({
   apiUrl,
   model,
+  imageModel,
   length,
   onModelChange,
+  onImageModelChange,
   onLengthChange,
 }: {
   apiUrl: string;
   model: ModelChoice;
+  imageModel: ModelChoice;
   length: LengthChoice;
   onModelChange: (model: ModelChoice) => void;
+  onImageModelChange: (model: ModelChoice) => void;
   onLengthChange: (length: LengthChoice) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -96,10 +100,18 @@ export default function UsagePanel({
 
             <div className="mt-4 space-y-3 text-sm">
               <div>
-                <p className="mb-1 font-semibold">Modelo</p>
+                <p className="mb-1 font-semibold">Modelo (texto)</p>
                 <div className="flex gap-2">
                   <ToggleButton etiqueta="Sonnet" activo={model === 'sonnet'} onClick={() => onModelChange('sonnet')} />
                   <ToggleButton etiqueta="Haiku" activo={model === 'haiku'} onClick={() => onModelChange('haiku')} />
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-1 font-semibold">Modelo (prompt de imagen)</p>
+                <div className="flex gap-2">
+                  <ToggleButton etiqueta="Sonnet" activo={imageModel === 'sonnet'} onClick={() => onImageModelChange('sonnet')} />
+                  <ToggleButton etiqueta="Haiku" activo={imageModel === 'haiku'} onClick={() => onImageModelChange('haiku')} />
                 </div>
               </div>
 
@@ -112,8 +124,8 @@ export default function UsagePanel({
               </div>
 
               <p className="text-xs text-ink-soft">
-                Se aplica al próximo clic en el mapa. Sonnet corto es lo más rápido; Haiku extenso escribe más pero
-                menos ajustado a lo pedido.
+                Se aplica al próximo clic en el mapa. El modelo de imagen solo redacta el prompt visual en
+                inglés (no se muestra) — no tiene por qué coincidir con el del texto.
               </p>
             </div>
 

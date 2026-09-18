@@ -84,6 +84,7 @@ export default function Home() {
   // manda al backend en cada consulta. No hace falta persistirla entre
   // sesiones (localStorage), es una elección de "voy a probar esto ahora".
   const [model, setModel] = useState<ModelChoice>('sonnet');
+  const [imageModel, setImageModel] = useState<ModelChoice>('haiku');
   const [length, setLength] = useState<LengthChoice>('corto');
   const [style, setStyle] = useState<ImageStyle>('fotorrealista');
 
@@ -108,14 +109,16 @@ export default function Home() {
   // identidad en cada render) y aun así lea siempre los valores actuales.
   const yearRef = useRef(year);
   const modelRef = useRef(model);
+  const imageModelRef = useRef(imageModel);
   const lengthRef = useRef(length);
   const styleRef = useRef(style);
   useEffect(() => {
     yearRef.current = year;
     modelRef.current = model;
+    imageModelRef.current = imageModel;
     lengthRef.current = length;
     styleRef.current = style;
-  }, [year, model, length, style]);
+  }, [year, model, imageModel, length, style]);
 
   const liveMockResult = useMemo(
     () => (hasPicked ? mockResult(year, pickedPlace) : null),
@@ -139,6 +142,7 @@ export default function Home() {
       lng: String(lng),
       year: String(yearRef.current),
       model: modelRef.current,
+      imageModel: imageModelRef.current,
       length: lengthRef.current,
       style: styleRef.current,
     });
@@ -233,7 +237,15 @@ export default function Home() {
   const usagePanel = (
     <div className="flex items-center gap-2">
       <DebugPanel debug={debug} />
-      <UsagePanel apiUrl={API_URL} model={model} length={length} onModelChange={setModel} onLengthChange={setLength} />
+      <UsagePanel
+        apiUrl={API_URL}
+        model={model}
+        imageModel={imageModel}
+        length={length}
+        onModelChange={setModel}
+        onImageModelChange={setImageModel}
+        onLengthChange={setLength}
+      />
     </div>
   );
 
