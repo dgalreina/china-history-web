@@ -17,6 +17,7 @@ type Usage = {
 
 type ModelChoice = 'sonnet' | 'haiku';
 type LengthChoice = 'extenso' | 'corto';
+type ImageResolution = 'alta' | 'media' | 'baja';
 
 // gpt-image-2.5-flare no publica precio por token desglosado (input/output)
 // como sí hace dall-e-*. Esta tarifa es una aproximación gruesa: gasto total
@@ -37,17 +38,21 @@ export default function UsagePanel({
   model,
   imageModel,
   length,
+  resolution,
   onModelChange,
   onImageModelChange,
   onLengthChange,
+  onResolutionChange,
 }: {
   apiUrl: string;
   model: ModelChoice;
   imageModel: ModelChoice;
   length: LengthChoice;
+  resolution: ImageResolution;
   onModelChange: (model: ModelChoice) => void;
   onImageModelChange: (model: ModelChoice) => void;
   onLengthChange: (length: LengthChoice) => void;
+  onResolutionChange: (resolution: ImageResolution) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [usage, setUsage] = useState<Usage | null>(null);
@@ -123,9 +128,20 @@ export default function UsagePanel({
                 </div>
               </div>
 
+              <div>
+                <p className="mb-1 font-semibold">Resolución de imagen</p>
+                <div className="flex gap-2">
+                  <ToggleButton etiqueta="Alta" activo={resolution === 'alta'} onClick={() => onResolutionChange('alta')} />
+                  <ToggleButton etiqueta="Media" activo={resolution === 'media'} onClick={() => onResolutionChange('media')} />
+                  <ToggleButton etiqueta="Baja" activo={resolution === 'baja'} onClick={() => onResolutionChange('baja')} />
+                </div>
+              </div>
+
               <p className="text-xs text-ink-soft">
                 Se aplica al próximo clic en el mapa. El modelo de imagen solo redacta el prompt visual en
-                inglés (no se muestra) — no tiene por qué coincidir con el del texto.
+                inglés (no se muestra) — no tiene por qué coincidir con el del texto. La resolución cambia el
+                peso de la imagen (es de sobra con la más baja para móvil), pero no acelera la generación con
+                este modelo — mira el panel de debug para comprobarlo.
               </p>
             </div>
 

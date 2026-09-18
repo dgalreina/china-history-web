@@ -65,6 +65,7 @@ function mockResult(year: number, placeName: string | null): Result {
 
 type ModelChoice = 'sonnet' | 'haiku';
 type LengthChoice = 'extenso' | 'corto';
+type ImageResolution = 'alta' | 'media' | 'baja';
 
 export default function Home() {
   // El slider va de -2000 a 2000: el año 0 lo deja en el centro de la barra.
@@ -87,6 +88,7 @@ export default function Home() {
   const [imageModel, setImageModel] = useState<ModelChoice>('haiku');
   const [length, setLength] = useState<LengthChoice>('corto');
   const [style, setStyle] = useState<ImageStyle>('fotorrealista');
+  const [resolution, setResolution] = useState<ImageResolution>('alta');
 
   // Para la tarjeta simulada guardamos solo el lugar del último clic: el
   // año/dinastía se recalculan en cada render a partir de `year`, así la
@@ -112,13 +114,15 @@ export default function Home() {
   const imageModelRef = useRef(imageModel);
   const lengthRef = useRef(length);
   const styleRef = useRef(style);
+  const resolutionRef = useRef(resolution);
   useEffect(() => {
     yearRef.current = year;
     modelRef.current = model;
     imageModelRef.current = imageModel;
     lengthRef.current = length;
     styleRef.current = style;
-  }, [year, model, imageModel, length, style]);
+    resolutionRef.current = resolution;
+  }, [year, model, imageModel, length, style, resolution]);
 
   const liveMockResult = useMemo(
     () => (hasPicked ? mockResult(year, pickedPlace) : null),
@@ -145,6 +149,7 @@ export default function Home() {
       imageModel: imageModelRef.current,
       length: lengthRef.current,
       style: styleRef.current,
+      resolution: resolutionRef.current,
     });
     const es = new EventSource(`${API_URL}/historical-agent/stream?${params}`);
     eventSourceRef.current = es;
@@ -242,9 +247,11 @@ export default function Home() {
         model={model}
         imageModel={imageModel}
         length={length}
+        resolution={resolution}
         onModelChange={setModel}
         onImageModelChange={setImageModel}
         onLengthChange={setLength}
+        onResolutionChange={setResolution}
       />
     </div>
   );
