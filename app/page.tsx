@@ -5,6 +5,7 @@ import DynastyTimeline, { segmentAt } from './components/DynastyTimeline';
 import { ImagenPanel, PortadaPanel, TextoPanel, type Fase, type Result } from './components/ResultPanels';
 import UsagePanel from './components/UsagePanel';
 import StyleSelector, { type ImageStyle } from './components/StyleSelector';
+import DebugPanel, { type DebugInfo } from './components/DebugPanel';
 
 // En local usa el backend de tu máquina; en producción, configura
 // NEXT_PUBLIC_API_URL en las variables de entorno de DigitalOcean con la
@@ -70,6 +71,9 @@ export default function Home() {
   const [year, setYear] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // Qué se ha mandado/devuelto en cada paso del pipeline de la consulta
+  // actual (ver DebugPanel.tsx). No se persiste: se pierde al pedir otra.
+  const [debug, setDebug] = useState<DebugInfo | null>(null);
 
   // Qué ocupa la mitad inferior una vez hay resultado. Al llegar el lugar de
   // una consulta nueva se pasa a "texto" para leerlo según se escribe; el
@@ -128,6 +132,7 @@ export default function Home() {
     eventSourceRef.current?.close();
     setNotice(null);
     setFase('cargando');
+    setDebug(null);
 
     const params = new URLSearchParams({
       lat: String(lat),
@@ -169,6 +174,9 @@ export default function Home() {
     es.addEventListener('imagen', (e) => {
       const { url } = leer<{ url: string | null }>(e);
       setResult((r) => (r ? { ...r, imagen_url: url } : r));
+    });
+    es.addEventListener('debug', (e) => {
+      setDebug(leer<DebugInfo>(e));
     });
     es.addEventListener('done', () => {
       cerrar();
@@ -223,7 +231,10 @@ export default function Home() {
   // esquina inferior.
   const styleSelector = <StyleSelector style={style} onStyleChange={setStyle} />;
   const usagePanel = (
-    <UsagePanel apiUrl={API_URL} model={model} length={length} onModelChange={setModel} onLengthChange={setLength} />
+    <div className="flex items-center gap-2">
+      <DebugPanel debug={debug} />
+      <UsagePanel apiUrl={API_URL} model={model} length={length} onModelChange={setModel} onLengthChange={setLength} />
+    </div>
   );
 
   // Dos mitades (arriba/abajo en móvil, izquierda/derecha en pantallas
