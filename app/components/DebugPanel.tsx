@@ -6,8 +6,20 @@ type Fiabilidad = 'alta' | 'media' | 'baja';
 type Hito = { existe: boolean; descripcion?: string; fiabilidad?: Fiabilidad } | null;
 type DebugTavilyBusqueda = { etiqueta: string; query: string; ms?: number; error?: string; resultados?: string[] };
 
+type ChgisResolucion = {
+  namePy: string;
+  nameCh: string;
+  nameFt: string;
+  level: 'county' | 'prefecture';
+  typePy: string;
+  typeCh: string;
+  begYear: number;
+  endYear: number;
+  distanceKm: number;
+};
+
 export type DebugInfo = {
-  lugar?: { lat: number; lng: number; placeName: string; placeSearchName: string };
+  lugar?: { lat: number; lng: number; placeName: string; placeSearchName: string; chgis?: ChgisResolucion | null };
   tavilyContexto?: { cache: boolean; ms?: number; busquedas?: DebugTavilyBusqueda[] };
   tavilyHito?: { cache: boolean; ms?: number; query?: string; resultado?: string | null; error?: string };
   claudeTexto?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: string };
@@ -129,12 +141,31 @@ function Campo({ etiqueta, valor }: { etiqueta: string; valor: React.ReactNode }
 function PestañaLugar({ debug }: { debug: DebugInfo }) {
   const l = debug.lugar;
   if (!l) return <p className="text-ink-soft">Sin datos.</p>;
+  const c = l.chgis;
   return (
-    <Bloque titulo="Geocodificación (Mapbox)">
-      <Campo etiqueta="Coordenadas pulsadas" valor={`${l.lat}, ${l.lng}`} />
-      <Campo etiqueta="Nombre (español)" valor={l.placeName} />
-      <Campo etiqueta="Nombre de búsqueda (chino)" valor={l.placeSearchName} />
-    </Bloque>
+    <>
+      <Bloque titulo="Geocodificación (Mapbox)">
+        <Campo etiqueta="Coordenadas pulsadas" valor={`${l.lat}, ${l.lng}`} />
+        <Campo etiqueta="Nombre (español)" valor={l.placeName} />
+      </Bloque>
+      <Bloque titulo="Nodo A' — CHGIS">
+        {c ? (
+          <>
+            <Campo etiqueta="Asentamiento" valor={`${c.nameCh} (${c.namePy}) — ${c.nameFt}`} />
+            <Campo etiqueta="Nivel" valor={c.level === 'county' ? 'Condado' : 'Prefectura'} />
+            <Campo etiqueta="Tipo" valor={c.typeCh ? `${c.typeCh} (${c.typePy})` : undefined} />
+            <Campo etiqueta="Vigente" valor={`${c.begYear} – ${c.endYear}`} />
+            <Campo etiqueta="Distancia al punto pulsado" valor={`${c.distanceKm} km`} />
+          </>
+        ) : (
+          <p className="text-ink-soft">Sin cobertura CHGIS aquí (fuera de 221 a.C.–1911 d.C., o sin asentamiento documentado cerca). Se usa el nombre moderno de Mapbox.</p>
+        )}
+      </Bloque>
+      <Bloque titulo="Nombre de búsqueda (Tavily)">
+        <Campo etiqueta="Nombre chino usado" valor={l.placeSearchName} />
+        <Campo etiqueta="Origen" valor={c ? 'CHGIS (histórico)' : 'Mapbox (moderno)'} />
+      </Bloque>
+    </>
   );
 }
 
