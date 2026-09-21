@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "export:chgis-geojson": "node scripts/export-chgis-geojson.mjs",
-    "export:chgis-boundaries": "node scripts/export-chgis-boundaries.mjs"
+    "export:chgis-boundaries": "node scripts/export-chgis-boundaries.mjs",
+    "export:hitos-geojson": "node scripts/export-hitos-geojson.mjs"
   },
   "dependencies": {
     "mapbox-gl": "^3.30.0",

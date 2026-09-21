@@ -160,6 +160,27 @@ export default function MapView({
         layout: { 'text-field': textoChinoYPinyin as any, 'text-size': 11, 'text-line-height': 1.1 },
         paint: { 'text-color': '#e9e7e2', 'text-halo-color': '#1d1b19', 'text-halo-width': 1 },
       });
+
+      // Puntos de hito extraídos del libro (ver
+      // china-history-api/scripts/extract-hitos.mjs +
+      // scripts/export-hitos-geojson.mjs) — de antemano, antes de hacer
+      // clic, para que el usuario sepa dónde el libro documenta algo. y0/y1
+      // ya vienen con la tolerancia de año aplicada (±25 años). Es una capa
+      // del mapa, no un DOM Marker, así que el clic le pasa de largo al
+      // listener de más abajo sin lógica extra.
+      map.addSource('hitos', { type: 'geojson', data: '/data/hitos.geojson' });
+      map.addLayer({
+        id: 'hitos-circle',
+        type: 'circle',
+        source: 'hitos',
+        filter: filtroAño(yearRef.current) as any,
+        paint: {
+          'circle-radius': 5,
+          'circle-color': '#d4a24c',
+          'circle-stroke-width': 1.5,
+          'circle-stroke-color': '#1d1b19',
+        },
+      });
     });
 
     map.on('click', (e) => {
@@ -204,6 +225,7 @@ export default function MapView({
     map.setFilter('chgis-prefecture-labels', ['all', ['==', ['get', 'level'], 'prefecture'], filtroAño] as any);
     map.setFilter('chgis-county-labels', ['all', ['==', ['get', 'level'], 'county'], filtroAño] as any);
     map.setFilter('chgis-boundaries-line', filtroAño as any);
+    if (map.getLayer('hitos-circle')) map.setFilter('hitos-circle', filtroAño as any);
   }, [year]);
 
   return <div ref={mapContainer} className="absolute inset-0 h-full w-full" />;

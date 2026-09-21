@@ -25,17 +25,23 @@ export type DebugInfo = {
   // sin grounding externo (ver `disabled`/`sinTavily` en cada sección).
   tavilyPausado?: boolean;
   tavilyContexto?: { cache: boolean; ms?: number; busquedas?: DebugTavilyBusqueda[]; disabled?: boolean };
-  tavilyHito?: { cache: boolean; ms?: number; query?: string; resultado?: string | null; error?: string; disabled?: boolean };
+  tavilyHito?: { cache: boolean; ms?: number; query?: string; resultado?: string | null; error?: string };
+  // Con Tavily desactivado, ramaHito llena esto en vez de tavilyHito (RAG
+  // sobre el libro indexado) — nunca los dos a la vez.
+  ragHito?: { cache: boolean; ms?: number; query?: string; resultado?: string | null; error?: string };
   claudeTexto?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: string; sinTavily?: boolean };
   claudePromptImagen?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: string | null; sinTavily?: boolean };
-  claudeHito?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: Hito; disabled?: boolean };
+  claudeHito?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: Hito };
   openaiImagen?: { cache: boolean; ms?: number; modelo?: string; tamaño?: string; estilo?: string; prompt?: string; resultado?: string; error?: string };
   totalMs?: number;
 };
 
 const PESTAÑAS = ['lugar', 'tavily', 'claude', 'openai'] as const;
 type Pestaña = (typeof PESTAÑAS)[number];
-const ETIQUETA_PESTAÑA: Record<Pestaña, string> = { lugar: 'Lugar', tavily: 'Tavily', claude: 'Claude', openai: 'OpenAI' };
+// El id de la pestaña se deja como "tavily" (evita tocar el resto del
+// componente), pero ahora también aloja el bloque de hito cuando viene del
+// RAG sobre el libro (ver ragHito) — de ahí la etiqueta más genérica.
+const ETIQUETA_PESTAÑA: Record<Pestaña, string> = { lugar: 'Lugar', tavily: 'Búsqueda', claude: 'Claude', openai: 'OpenAI' };
 
 function formatMs(ms?: number): string | null {
   if (ms === undefined) return null;
@@ -90,7 +96,7 @@ export default function DebugPanel({ debug }: { debug: DebugInfo | null }) {
 
             {debug.tavilyPausado && (
               <p className="mx-5 mt-3 rounded-lg bg-seal/10 px-3 py-2 text-[11px] font-semibold text-seal">
-                Tavily desactivado — texto e imagen generados solo con el conocimiento de Claude, sin hito.
+                Tavily desactivado — texto e imagen generados solo con el conocimiento de Claude; el hito viene del RAG sobre el libro.
               </p>
             )}
 
@@ -184,7 +190,10 @@ function PestañaLugar({ debug }: { debug: DebugInfo }) {
 
 function PestañaTavily({ debug }: { debug: DebugInfo }) {
   const ctx = debug.tavilyContexto;
-  const hito = debug.tavilyHito;
+  // Nunca vienen los dos a la vez — solo uno según si tavilyActivo estaba
+  // encendido cuando corrió esta consulta.
+  const hito = debug.ragHito ?? debug.tavilyHito;
+  const fuenteHito = debug.ragHito ? 'RAG (libro)' : 'Tavily';
   return (
     <>
       <Bloque titulo="Contexto (5 búsquedas)" cache={ctx?.cache} ms={ctx?.ms}>
@@ -207,18 +216,12 @@ function PestañaTavily({ debug }: { debug: DebugInfo }) {
           ))
         )}
       </Bloque>
-      <Bloque titulo="Hito histórico" cache={hito?.cache} ms={hito?.ms}>
-        {hito?.disabled ? (
-          <p className="text-ink-soft">Tavily desactivado — no se ha llamado, ni se muestra hito.</p>
+      <Bloque titulo="Hito histórico" cache={hito?.cache} ms={hito?.ms} nota={hito ? fuenteHito : undefined}>
+        <Campo etiqueta="Query enviada" valor={hito?.query} />
+        {hito?.error ? (
+          <Campo etiqueta="Error" valor={hito.error} />
         ) : (
-          <>
-            <Campo etiqueta="Query enviada" valor={hito?.query} />
-            {hito?.error ? (
-              <Campo etiqueta="Error" valor={hito.error} />
-            ) : (
-              <Campo etiqueta="Resultado" valor={hito?.resultado ?? '(sin resultados)'} />
-            )}
-          </>
+          <Campo etiqueta="Resultado" valor={hito?.resultado ?? '(sin resultados)'} />
         )}
       </Bloque>
     </>
@@ -230,23 +233,17 @@ function BloqueClaude({
   info,
 }: {
   titulo: string;
-  info?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: unknown; sinTavily?: boolean; disabled?: boolean };
+  info?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: unknown; sinTavily?: boolean };
 }) {
   const respuesta = info?.respuesta;
   const respuestaTexto = typeof respuesta === 'string' ? respuesta : respuesta != null ? JSON.stringify(respuesta, null, 2) : undefined;
-  const nota = info?.sinTavily ? 'sin búsqueda web' : info?.disabled ? 'desactivado' : undefined;
+  const nota = info?.sinTavily ? 'sin búsqueda web' : undefined;
   return (
     <Bloque titulo={titulo} cache={info?.cache} ms={info?.ms} nota={nota}>
-      {info?.disabled ? (
-        <p className="text-ink-soft">Tavily desactivado — sin hito que evaluar.</p>
-      ) : (
-        <>
-          <Campo etiqueta="Modelo" valor={info?.modelo} />
-          <Campo etiqueta="Prompt de sistema" valor={info?.systemPrompt} />
-          <Campo etiqueta="Prompt de usuario" valor={info?.userPrompt} />
-          <Campo etiqueta="Respuesta" valor={respuestaTexto} />
-        </>
-      )}
+      <Campo etiqueta="Modelo" valor={info?.modelo} />
+      <Campo etiqueta="Prompt de sistema" valor={info?.systemPrompt} />
+      <Campo etiqueta="Prompt de usuario" valor={info?.userPrompt} />
+      <Campo etiqueta="Respuesta" valor={respuestaTexto} />
     </Bloque>
   );
 }
