@@ -20,11 +20,15 @@ type ChgisResolucion = {
 
 export type DebugInfo = {
   lugar?: { lat: number; lng: number; placeName: string; placeSearchName: string; chgis?: ChgisResolucion | null };
-  tavilyContexto?: { cache: boolean; ms?: number; busquedas?: DebugTavilyBusqueda[] };
-  tavilyHito?: { cache: boolean; ms?: number; query?: string; resultado?: string | null; error?: string };
-  claudeTexto?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: string };
-  claudePromptImagen?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: string | null };
-  claudeHito?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: Hito };
+  // true mientras Tavily está pausado en el backend (TAVILY_ENABLED=false):
+  // ninguna sección de Tavily se ha ejecutado y las de Claude han escrito
+  // sin grounding externo (ver `disabled`/`sinTavily` en cada sección).
+  tavilyPausado?: boolean;
+  tavilyContexto?: { cache: boolean; ms?: number; busquedas?: DebugTavilyBusqueda[]; disabled?: boolean };
+  tavilyHito?: { cache: boolean; ms?: number; query?: string; resultado?: string | null; error?: string; disabled?: boolean };
+  claudeTexto?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: string; sinTavily?: boolean };
+  claudePromptImagen?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: string | null; sinTavily?: boolean };
+  claudeHito?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: Hito; disabled?: boolean };
   openaiImagen?: { cache: boolean; ms?: number; modelo?: string; tamaño?: string; estilo?: string; prompt?: string; resultado?: string; error?: string };
   totalMs?: number;
 };
@@ -84,6 +88,12 @@ export default function DebugPanel({ debug }: { debug: DebugInfo | null }) {
               </button>
             </div>
 
+            {debug.tavilyPausado && (
+              <p className="mx-5 mt-3 rounded-lg bg-seal/10 px-3 py-2 text-[11px] font-semibold text-seal">
+                Tavily desactivado — texto e imagen generados solo con el conocimiento de Claude, sin hito.
+              </p>
+            )}
+
             <div className="flex gap-1 px-5 pt-3">
               {PESTAÑAS.map((p) => (
                 <button
@@ -112,11 +122,14 @@ export default function DebugPanel({ debug }: { debug: DebugInfo | null }) {
   );
 }
 
-function Bloque({ titulo, cache, ms, children }: { titulo: string; cache?: boolean; ms?: number; children?: React.ReactNode }) {
+function Bloque({ titulo, cache, ms, nota, children }: { titulo: string; cache?: boolean; ms?: number; nota?: string; children?: React.ReactNode }) {
   return (
     <div className="mb-4 rounded-lg border border-line p-3">
       <div className="mb-1.5 flex items-center justify-between gap-2">
-        <p className="font-semibold">{titulo}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="font-semibold">{titulo}</p>
+          {nota && <span className="rounded-full bg-paper-dark px-2 py-0.5 text-[11px] text-ink-soft">{nota}</span>}
+        </div>
         {cache ? (
           <span className="rounded-full bg-paper-dark px-2 py-0.5 text-[11px] text-ink-soft">obtenido de caché</span>
         ) : (
@@ -175,27 +188,37 @@ function PestañaTavily({ debug }: { debug: DebugInfo }) {
   return (
     <>
       <Bloque titulo="Contexto (5 búsquedas)" cache={ctx?.cache} ms={ctx?.ms}>
-        {ctx?.busquedas?.map((b, i) => (
-          <div key={i} className={i > 0 ? 'mt-3 border-t border-line pt-3' : ''}>
-            <div className="flex items-center justify-between gap-2">
-              <p className="font-semibold text-ink">{b.etiqueta}</p>
-              {formatMs(b.ms) && <span className="whitespace-nowrap text-[11px] text-stone">{formatMs(b.ms)}</span>}
+        {ctx?.disabled ? (
+          <p className="text-ink-soft">Tavily desactivado — no se ha llamado.</p>
+        ) : (
+          ctx?.busquedas?.map((b, i) => (
+            <div key={i} className={i > 0 ? 'mt-3 border-t border-line pt-3' : ''}>
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-semibold text-ink">{b.etiqueta}</p>
+                {formatMs(b.ms) && <span className="whitespace-nowrap text-[11px] text-stone">{formatMs(b.ms)}</span>}
+              </div>
+              <Campo etiqueta="Query enviada" valor={b.query} />
+              {b.error ? (
+                <Campo etiqueta="Error" valor={b.error} />
+              ) : (
+                <Campo etiqueta={`Resultados (${b.resultados?.length ?? 0})`} valor={b.resultados?.join('\n\n---\n\n')} />
+              )}
             </div>
-            <Campo etiqueta="Query enviada" valor={b.query} />
-            {b.error ? (
-              <Campo etiqueta="Error" valor={b.error} />
-            ) : (
-              <Campo etiqueta={`Resultados (${b.resultados?.length ?? 0})`} valor={b.resultados?.join('\n\n---\n\n')} />
-            )}
-          </div>
-        ))}
+          ))
+        )}
       </Bloque>
       <Bloque titulo="Hito histórico" cache={hito?.cache} ms={hito?.ms}>
-        <Campo etiqueta="Query enviada" valor={hito?.query} />
-        {hito?.error ? (
-          <Campo etiqueta="Error" valor={hito.error} />
+        {hito?.disabled ? (
+          <p className="text-ink-soft">Tavily desactivado — no se ha llamado, ni se muestra hito.</p>
         ) : (
-          <Campo etiqueta="Resultado" valor={hito?.resultado ?? '(sin resultados)'} />
+          <>
+            <Campo etiqueta="Query enviada" valor={hito?.query} />
+            {hito?.error ? (
+              <Campo etiqueta="Error" valor={hito.error} />
+            ) : (
+              <Campo etiqueta="Resultado" valor={hito?.resultado ?? '(sin resultados)'} />
+            )}
+          </>
         )}
       </Bloque>
     </>
@@ -207,16 +230,23 @@ function BloqueClaude({
   info,
 }: {
   titulo: string;
-  info?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: unknown };
+  info?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: unknown; sinTavily?: boolean; disabled?: boolean };
 }) {
   const respuesta = info?.respuesta;
   const respuestaTexto = typeof respuesta === 'string' ? respuesta : respuesta != null ? JSON.stringify(respuesta, null, 2) : undefined;
+  const nota = info?.sinTavily ? 'sin búsqueda web' : info?.disabled ? 'desactivado' : undefined;
   return (
-    <Bloque titulo={titulo} cache={info?.cache} ms={info?.ms}>
-      <Campo etiqueta="Modelo" valor={info?.modelo} />
-      <Campo etiqueta="Prompt de sistema" valor={info?.systemPrompt} />
-      <Campo etiqueta="Prompt de usuario" valor={info?.userPrompt} />
-      <Campo etiqueta="Respuesta" valor={respuestaTexto} />
+    <Bloque titulo={titulo} cache={info?.cache} ms={info?.ms} nota={nota}>
+      {info?.disabled ? (
+        <p className="text-ink-soft">Tavily desactivado — sin hito que evaluar.</p>
+      ) : (
+        <>
+          <Campo etiqueta="Modelo" valor={info?.modelo} />
+          <Campo etiqueta="Prompt de sistema" valor={info?.systemPrompt} />
+          <Campo etiqueta="Prompt de usuario" valor={info?.userPrompt} />
+          <Campo etiqueta="Respuesta" valor={respuestaTexto} />
+        </>
+      )}
     </Bloque>
   );
 }
