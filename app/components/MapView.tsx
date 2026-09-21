@@ -82,11 +82,16 @@ export default function MapView({
     });
 
     map.on('style.load', () => {
-      // Queremos nombres de ciudades/pueblos pero sin el ruido visual de
-      // carreteras, puentes y túneles (ni sus etiquetas de nombre/número).
+      // Sin carreteras/puentes/túneles (ni sus etiquetas), y sin nombres
+      // modernos de ciudades/pueblos/aeropuertos/transporte/POIs — con los
+      // nombres históricos de CHGIS puestos encima (más abajo), mostrar
+      // también "Xining" o similar al lado de "敦煌郡" mezclaba presente y
+      // pasado en el mismo mapa. Se dejan fronteras de país/provincia y
+      // nombres de accidentes geográficos (ríos, desiertos): no cambian con
+      // el tiempo y ayudan a orientarse.
       const layers = map.getStyle()?.layers ?? [];
       for (const layer of layers) {
-        if (/^(road|bridge|tunnel)/.test(layer.id)) {
+        if (/^(road|bridge|tunnel|settlement|poi-label|airport-label|transit-label)/.test(layer.id)) {
           map.setLayoutProperty(layer.id, 'visibility', 'none');
         }
       }
