@@ -120,7 +120,10 @@ export function TextoPanel({
   onSaltarAHito: (lat: number, lng: number, año: number) => void;
 }) {
   const relacionados = result.hitos_relacionados;
-  const hayRelacionados = !!relacionados && (relacionados.futuros.length > 0 || relacionados.cercanos.length > 0);
+  // Solo una vez terminado de escribir el texto (ilustrando/listo) — antes
+  // se sentían fuera de lugar apareciendo a mitad de la animación.
+  const textoTerminado = fase === 'ilustrando' || fase === 'listo';
+  const hayRelacionados = textoTerminado && !!relacionados && (relacionados.futuros.length > 0 || relacionados.cercanos.length > 0);
 
   return (
     <div className="relative h-full w-full bg-paper">

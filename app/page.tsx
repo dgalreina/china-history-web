@@ -243,10 +243,17 @@ export default function Home() {
   // Al mover el slider con un punto ya elegido se repite la consulta para el
   // nuevo año — pero no en cada paso del arrastre (cada consulta son varias
   // búsquedas web y una imagen), sino cuando el año lleva un momento quieto.
+  // lastClickCoordsRef se lee DENTRO del timeout, no al programarlo: si
+  // saltarAHito cambia el año y justo después el usuario pulsa otro punto
+  // del mapa antes de que pasen los 600ms, este timer disparaba con las
+  // coordenadas viejas (capturadas al programarse) y pisaba la consulta
+  // nueva con la anterior — leyendo el ref al disparar, siempre usa el
+  // último punto real, sea cual sea.
   useEffect(() => {
-    if (!BACKEND_ENABLED || !lastClickCoordsRef.current) return;
-    const { lat, lng } = lastClickCoordsRef.current;
-    const timer = setTimeout(() => consultar(lat, lng), 600);
+    if (!BACKEND_ENABLED) return;
+    const timer = setTimeout(() => {
+      if (lastClickCoordsRef.current) consultar(lastClickCoordsRef.current.lat, lastClickCoordsRef.current.lng);
+    }, 600);
     return () => clearTimeout(timer);
   }, [year, consultar]);
 

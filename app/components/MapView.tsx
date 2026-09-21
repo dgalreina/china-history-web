@@ -213,8 +213,12 @@ export default function MapView({
       // tocar igual de fácil a cualquier zoom, si hay un punto de hito a
       // pocos píxeles del clic se usan sus coordenadas exactas en vez de
       // las del clic — el criterio pasa a ser "distancia en pantalla", que
-      // no depende del zoom.
-      const RADIO_ENGANCHE_PX = 16;
+      // no depende del zoom. El radio se queda cerca del tamaño visual del
+      // punto (circle-radius 5 + stroke 1.5 ≈ 6-7px): más grande que eso
+      // "engancha" clics que visualmente caen claramente fuera del punto
+      // (p. ej. al pulsar cerca de un hito justo después de saltar ahí,
+      // cuando el mapa se recentra encima suyo).
+      const RADIO_ENGANCHE_PX = 9;
       const cercanos = map.queryRenderedFeatures(
         [
           [e.point.x - RADIO_ENGANCHE_PX, e.point.y - RADIO_ENGANCHE_PX],
