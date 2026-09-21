@@ -165,9 +165,9 @@ export default function MapView({
       // china-history-api/scripts/extract-hitos.mjs +
       // scripts/export-hitos-geojson.mjs) — de antemano, antes de hacer
       // clic, para que el usuario sepa dónde el libro documenta algo. y0/y1
-      // ya vienen con la tolerancia de año aplicada (±25 años). Es una capa
-      // del mapa, no un DOM Marker, así que el clic le pasa de largo al
-      // listener de más abajo sin lógica extra.
+      // ya vienen con la tolerancia de año aplicada (±25 años). El clic
+      // "engancha" al punto más cercano en píxeles si hay uno cerca — ver
+      // map.on('click') más abajo.
       map.addSource('hitos', { type: 'geojson', data: '/data/hitos.geojson' });
       map.addLayer({
         id: 'hitos-circle',
@@ -186,10 +186,43 @@ export default function MapView({
     map.on('click', (e) => {
       if (!isInsideChina(e.lngLat.lat, e.lngLat.lng)) return; // fuera de China: no se puede tocar
 
-      onClickRef.current(e.lngLat.lat, e.lngLat.lng);
+      // El backend acepta un hito conocido hasta 50km del punto pulsado,
+      // pero a mucho zoom-out cada píxel de pantalla son decenas de km — un
+      // clic que cae visualmente justo sobre el punto puede traducirse en
+      // coordenadas reales muy lejos de él. Para que el punto se pueda
+      // tocar igual de fácil a cualquier zoom, si hay un punto de hito a
+      // pocos píxeles del clic se usan sus coordenadas exactas en vez de
+      // las del clic — el criterio pasa a ser "distancia en pantalla", que
+      // no depende del zoom.
+      const RADIO_ENGANCHE_PX = 16;
+      const cercanos = map.queryRenderedFeatures(
+        [
+          [e.point.x - RADIO_ENGANCHE_PX, e.point.y - RADIO_ENGANCHE_PX],
+          [e.point.x + RADIO_ENGANCHE_PX, e.point.y + RADIO_ENGANCHE_PX],
+        ],
+        { layers: ['hitos-circle'] },
+      );
+      let lngLat = e.lngLat;
+      if (cercanos.length > 0) {
+        let masCercano = cercanos[0];
+        let distanciaMin = Infinity;
+        for (const f of cercanos) {
+          const coords = (f as any).geometry.coordinates as [number, number];
+          const punto = map.project(coords);
+          const distancia = Math.hypot(punto.x - e.point.x, punto.y - e.point.y);
+          if (distancia < distanciaMin) {
+            distanciaMin = distancia;
+            masCercano = f;
+          }
+        }
+        const [lng, lat] = (masCercano as any).geometry.coordinates as [number, number];
+        lngLat = { lng, lat } as mapboxgl.LngLat;
+      }
+
+      onClickRef.current(lngLat.lat, lngLat.lng);
 
       if (markerRef.current) {
-        markerRef.current.setLngLat(e.lngLat);
+        markerRef.current.setLngLat(lngLat);
       } else {
         const el = document.createElement('div');
         el.className = 'h-4 w-4 rounded-full border-2 shadow-lg';

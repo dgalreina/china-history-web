@@ -26,9 +26,11 @@ export type DebugInfo = {
   tavilyPausado?: boolean;
   tavilyContexto?: { cache: boolean; ms?: number; busquedas?: DebugTavilyBusqueda[]; disabled?: boolean };
   tavilyHito?: { cache: boolean; ms?: number; query?: string; resultado?: string | null; error?: string };
-  // Con Tavily desactivado, ramaHito llena esto en vez de tavilyHito (RAG
-  // sobre el libro indexado) — nunca los dos a la vez.
-  ragHito?: { cache: boolean; ms?: number; query?: string; resultado?: string | null; error?: string };
+  // Hito ya extraído del libro (ver scripts/extract-hitos.mjs) encontrado
+  // cerca del punto pulsado — se muestra directo, sin investigar (no hay
+  // tavilyHito ni claudeHito en ese caso). Gana sobre tavilyHito cuando
+  // existe.
+  hitoConocido?: { encontrado: boolean; distanciaKm?: number };
   claudeTexto?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: string; sinTavily?: boolean };
   claudePromptImagen?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: string | null; sinTavily?: boolean; conHito?: boolean };
   claudeHito?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: Hito };
@@ -96,7 +98,7 @@ export default function DebugPanel({ debug }: { debug: DebugInfo | null }) {
 
             {debug.tavilyPausado && (
               <p className="mx-5 mt-3 rounded-lg bg-seal/10 px-3 py-2 text-[11px] font-semibold text-seal">
-                Tavily desactivado — texto e imagen generados solo con el conocimiento de Claude; el hito viene del RAG sobre el libro.
+                Tavily desactivado — texto e imagen generados solo con el conocimiento de Claude; el hito solo aparece si hay un punto ya conocido cerca.
               </p>
             )}
 
@@ -190,10 +192,8 @@ function PestañaLugar({ debug }: { debug: DebugInfo }) {
 
 function PestañaTavily({ debug }: { debug: DebugInfo }) {
   const ctx = debug.tavilyContexto;
-  // Nunca vienen los dos a la vez — solo uno según si tavilyActivo estaba
-  // encendido cuando corrió esta consulta.
-  const hito = debug.ragHito ?? debug.tavilyHito;
-  const fuenteHito = debug.ragHito ? 'RAG (libro)' : 'Tavily';
+  const conocido = debug.hitoConocido;
+  const tavilyHito = debug.tavilyHito;
   return (
     <>
       <Bloque titulo="Contexto (5 búsquedas)" cache={ctx?.cache} ms={ctx?.ms}>
@@ -216,12 +216,22 @@ function PestañaTavily({ debug }: { debug: DebugInfo }) {
           ))
         )}
       </Bloque>
-      <Bloque titulo="Hito histórico" cache={hito?.cache} ms={hito?.ms} nota={hito ? fuenteHito : undefined}>
-        <Campo etiqueta="Query enviada" valor={hito?.query} />
-        {hito?.error ? (
-          <Campo etiqueta="Error" valor={hito.error} />
+      <Bloque titulo="Hito histórico">
+        {conocido?.encontrado ? (
+          <p className="text-ink-soft">
+            Punto ya extraído del libro, a {conocido.distanciaKm} km del clic — se muestra directo, sin investigar de nuevo.
+          </p>
+        ) : tavilyHito ? (
+          <>
+            <Campo etiqueta="Query enviada (Tavily)" valor={tavilyHito.query} />
+            {tavilyHito.error ? (
+              <Campo etiqueta="Error" valor={tavilyHito.error} />
+            ) : (
+              <Campo etiqueta="Resultado" valor={tavilyHito.resultado ?? '(sin resultados)'} />
+            )}
+          </>
         ) : (
-          <Campo etiqueta="Resultado" valor={hito?.resultado ?? '(sin resultados)'} />
+          <p className="text-ink-soft">Sin punto conocido cerca — no se ha investigado nada.</p>
         )}
       </Bloque>
     </>
@@ -253,7 +263,13 @@ function PestañaClaude({ debug }: { debug: DebugInfo }) {
     <>
       <BloqueClaude titulo="Texto para el usuario" info={debug.claudeTexto} />
       <BloqueClaude titulo="Prompt de imagen" info={debug.claudePromptImagen} />
-      <BloqueClaude titulo="Evaluación del hito" info={debug.claudeHito} />
+      {debug.hitoConocido?.encontrado ? (
+        <Bloque titulo="Evaluación del hito">
+          <p className="text-ink-soft">No hace falta — el hito ya viene de un punto conocido (ver pestaña Búsqueda).</p>
+        </Bloque>
+      ) : (
+        <BloqueClaude titulo="Evaluación del hito" info={debug.claudeHito} />
+      )}
     </>
   );
 }
