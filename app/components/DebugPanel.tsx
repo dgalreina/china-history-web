@@ -30,7 +30,7 @@ export type DebugInfo = {
   // sobre el libro indexado) — nunca los dos a la vez.
   ragHito?: { cache: boolean; ms?: number; query?: string; resultado?: string | null; error?: string };
   claudeTexto?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: string; sinTavily?: boolean };
-  claudePromptImagen?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: string | null; sinTavily?: boolean };
+  claudePromptImagen?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: string | null; sinTavily?: boolean; conHito?: boolean };
   claudeHito?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: Hito };
   openaiImagen?: { cache: boolean; ms?: number; modelo?: string; tamaño?: string; estilo?: string; prompt?: string; resultado?: string; error?: string };
   totalMs?: number;
@@ -233,11 +233,11 @@ function BloqueClaude({
   info,
 }: {
   titulo: string;
-  info?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: unknown; sinTavily?: boolean };
+  info?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: unknown; sinTavily?: boolean; conHito?: boolean };
 }) {
   const respuesta = info?.respuesta;
   const respuestaTexto = typeof respuesta === 'string' ? respuesta : respuesta != null ? JSON.stringify(respuesta, null, 2) : undefined;
-  const nota = info?.sinTavily ? 'sin búsqueda web' : undefined;
+  const nota = info?.conHito ? 'ilustra el hito' : info?.sinTavily ? 'sin búsqueda web' : undefined;
   return (
     <Bloque titulo={titulo} cache={info?.cache} ms={info?.ms} nota={nota}>
       <Campo etiqueta="Modelo" valor={info?.modelo} />
