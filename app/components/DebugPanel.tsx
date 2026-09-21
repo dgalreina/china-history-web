@@ -36,7 +36,7 @@ export type DebugInfo = {
   // construirPromptImagen). CLOTHING sigue siendo conocimiento de Claude,
   // el libro no cubre bien vestimenta.
   arquitecturaRag?: { cache: boolean; ms?: number; query?: string; resultado?: string | null; error?: string };
-  claudeTexto?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: string; sinTavily?: boolean };
+  claudeTexto?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: string; sinTavily?: boolean; conHito?: boolean };
   claudePromptImagen?: {
     cache: boolean;
     ms?: number;
