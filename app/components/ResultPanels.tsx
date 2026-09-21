@@ -17,12 +17,6 @@ export type Result = {
 // listo: no hay nada en curso.
 export type Fase = 'cargando' | 'escribiendo' | 'ilustrando' | 'listo';
 
-const fiabilidadColor: Record<string, string> = {
-  alta: '#2e7d32',
-  media: '#f9a825',
-  baja: '#c62828',
-};
-
 // Mitad de la imagen mientras no hay resultado: la vasija de la portada
 // (misma imagen que el icono de la app) con el título encima.
 export function PortadaPanel({ children }: { children?: React.ReactNode }) {
@@ -104,20 +98,17 @@ export function TextoPanel({ result, fase }: { result: Result; fase: Fase }) {
           fase === 'cargando' ? 'opacity-50' : ''
         }`}
       >
+        {result.hito?.existe && (
+          <p className="mb-4 rounded-r-lg border-l-3 border-seal bg-paper-dark px-3 py-2.5 text-[13px]">
+            <span className="font-semibold">Hito</span> — {result.hito.descripcion}
+          </p>
+        )}
         <p className="whitespace-pre-line">
           {result.contexto_ambiental}
           {fase === 'escribiendo' && (
             <span className="ml-0.5 inline-block h-3.5 w-0.5 animate-pulse bg-seal align-middle" aria-hidden />
           )}
         </p>
-        {result.hito?.existe && (
-          <p
-            className="mt-4 rounded-r-lg bg-paper-dark px-3 py-2.5 text-[13px]"
-            style={{ borderLeft: `3px solid ${fiabilidadColor[result.hito.fiabilidad] ?? '#666'}` }}
-          >
-            <span className="font-semibold">Hito · fiabilidad {result.hito.fiabilidad}</span> — {result.hito.descripcion}
-          </p>
-        )}
       </div>
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-linear-to-b from-transparent via-paper/90 to-paper" />
     </div>

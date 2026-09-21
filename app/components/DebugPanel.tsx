@@ -272,13 +272,12 @@ function BloqueClaude({
 }) {
   const respuesta = info?.respuesta;
   const respuestaTexto = typeof respuesta === 'string' ? respuesta : respuesta != null ? JSON.stringify(respuesta, null, 2) : undefined;
-  const nota = info?.conHito
-    ? 'ilustra el hito'
-    : info?.conArquitecturaRag
-      ? 'arquitectura del libro'
-      : info?.sinTavily
-        ? 'sin búsqueda web'
-        : undefined;
+  // conHito y conArquitecturaRag pueden coincidir (el hito ancla el evento,
+  // el RAG ancla arquitectura/urbanismo) — se muestran los dos si es el caso.
+  const notas = [info?.conHito && 'ilustra el hito', info?.conArquitecturaRag && 'arquitectura del libro', !info?.conHito && !info?.conArquitecturaRag && info?.sinTavily && 'sin búsqueda web'].filter(
+    Boolean,
+  ) as string[];
+  const nota = notas.length ? notas.join(' + ') : undefined;
   return (
     <Bloque titulo={titulo} cache={info?.cache} ms={info?.ms} nota={nota}>
       <Campo etiqueta="Modelo" valor={info?.modelo} />
