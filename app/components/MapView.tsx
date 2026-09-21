@@ -10,10 +10,12 @@ export default function MapView({
   onClick,
   apiUrl,
   focus,
+  year,
 }: {
   onClick: (lat: number, lng: number) => void;
   apiUrl: string;
   focus: { lat: number; lng: number } | null;
+  year: number;
 }) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -55,6 +57,14 @@ export default function MapView({
     onClickRef.current = onClick;
   }, [onClick]);
 
+  // Igual que focusRef: para que style.load use el año actual al añadir las
+  // capas de nombres históricos, sin que year forme parte de las
+  // dependencias del efecto de inicialización del mapa.
+  const yearRef = useRef(year);
+  useEffect(() => {
+    yearRef.current = year;
+  }, [year]);
+
   useEffect(() => {
     if (mapRef.current) return; // evita reinicializar en re-render
 
@@ -90,6 +100,40 @@ export default function MapView({
         source: 'china-mask',
         paint: { 'fill-color': '#000000', 'fill-opacity': 0.65 },
       });
+
+      // Nombres históricos reales de ciudades/condados (CHGIS, ver
+      // scripts/export-chgis-geojson.mjs) — precargados enteros, sin
+      // llamadas de red por interacción. y0/y1 son el rango de años en que
+      // ese nombre estuvo vigente; el efecto de más abajo actualiza el
+      // filtro cada vez que cambia el año del slider. Se añaden después de
+      // la máscara para quedar por encima del oscurecido. Condados
+      // (~10.500) solo a partir de cierto zoom para no saturar el mapa;
+      // prefecturas siempre visibles. Mapbox ya evita solapes de texto por
+      // defecto (text-allow-overlap: false).
+      map.addSource('chgis', { type: 'geojson', data: '/data/chgis-settlements.geojson' });
+      const filtroAño = (y: number) => ['all', ['<=', ['get', 'y0'], y], ['>=', ['get', 'y1'], y]];
+      map.addLayer({
+        id: 'chgis-prefecture-labels',
+        type: 'symbol',
+        source: 'chgis',
+        filter: ['all', ['==', ['get', 'level'], 'prefecture'], filtroAño(yearRef.current)] as any,
+        // Sin text-font explícito: hereda el stack por defecto de la capa
+        // simbólica del estilo, que ya renderiza los nombres chinos
+        // modernos que deja visibles style.load — un valor inventado aquí
+        // podría no existir en los glifos del estilo y dejar el texto en
+        // blanco sin avisar.
+        layout: { 'text-field': ['get', 'name'], 'text-size': 13 },
+        paint: { 'text-color': '#e9e7e2', 'text-halo-color': '#1d1b19', 'text-halo-width': 1.2 },
+      });
+      map.addLayer({
+        id: 'chgis-county-labels',
+        type: 'symbol',
+        source: 'chgis',
+        minzoom: 6,
+        filter: ['all', ['==', ['get', 'level'], 'county'], filtroAño(yearRef.current)] as any,
+        layout: { 'text-field': ['get', 'name'], 'text-size': 11 },
+        paint: { 'text-color': '#e9e7e2', 'text-halo-color': '#1d1b19', 'text-halo-width': 1 },
+      });
     });
 
     map.on('click', (e) => {
@@ -122,6 +166,18 @@ export default function MapView({
       mapRef.current = null;
     };
   }, [apiUrl]);
+
+  // Actualiza qué nombres históricos se ven cada vez que se mueve el slider
+  // de año — sin llamada de red, solo recalcula el filtro sobre los datos
+  // ya cargados. Guardado por si corre antes de que style.load haya añadido
+  // las capas (p. ej. justo al montar).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.getLayer('chgis-prefecture-labels')) return;
+    const filtroAño = ['all', ['<=', ['get', 'y0'], year], ['>=', ['get', 'y1'], year]];
+    map.setFilter('chgis-prefecture-labels', ['all', ['==', ['get', 'level'], 'prefecture'], filtroAño] as any);
+    map.setFilter('chgis-county-labels', ['all', ['==', ['get', 'level'], 'county'], filtroAño] as any);
+  }, [year]);
 
   return <div ref={mapContainer} className="absolute inset-0 h-full w-full" />;
 }

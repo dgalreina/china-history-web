@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "export:chgis-geojson": "node scripts/export-chgis-geojson.mjs"
   },
   "dependencies": {
     "mapbox-gl": "^3.30.0",

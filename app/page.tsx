@@ -276,7 +276,7 @@ export default function Home() {
       </div>
 
       <div className="absolute inset-x-0 bottom-0 h-1/2 md:inset-y-0 md:left-1/2 md:h-full md:w-1/2">
-        <MapView onClick={handleMapClick} apiUrl={API_URL} focus={focus} />
+        <MapView onClick={handleMapClick} apiUrl={API_URL} focus={focus} year={year} />
 
         {hayResultado && vista === 'texto' && (
           // z-3: por encima de los controles de Mapbox (logo/atribución, z-2)
