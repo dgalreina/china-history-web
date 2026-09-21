@@ -106,6 +106,24 @@ export default function MapView({
         paint: { 'fill-color': '#000000', 'fill-opacity': 0.65 },
       });
 
+      const filtroAño = (y: number) => ['all', ['<=', ['get', 'y0'], y], ['>=', ['get', 'y1'], y]];
+
+      // Fronteras de prefectura históricas (CHGIS, ver
+      // scripts/export-chgis-boundaries.mjs) — mismo patrón que los nombres
+      // de más abajo (precargadas enteras, filtro por año actualizado en el
+      // efecto de más abajo). Solo contorno, sin relleno, para no tapar el
+      // satélite ni competir con las etiquetas de nombres, que van encima
+      // (se añaden después). Cobertura real 1350-1911 con huecos antes; sin
+      // datos ahí, sin más, igual que con los nombres.
+      map.addSource('chgis-boundaries', { type: 'geojson', data: '/data/chgis-boundaries.geojson' });
+      map.addLayer({
+        id: 'chgis-boundaries-line',
+        type: 'line',
+        source: 'chgis-boundaries',
+        filter: filtroAño(yearRef.current) as any,
+        paint: { 'line-color': '#e9e7e2', 'line-width': 1, 'line-opacity': 0.55 },
+      });
+
       // Nombres históricos reales de ciudades/condados (CHGIS, ver
       // scripts/export-chgis-geojson.mjs) — precargados enteros, sin
       // llamadas de red por interacción. y0/y1 son el rango de años en que
@@ -116,7 +134,6 @@ export default function MapView({
       // prefecturas siempre visibles. Mapbox ya evita solapes de texto por
       // defecto (text-allow-overlap: false).
       map.addSource('chgis', { type: 'geojson', data: '/data/chgis-settlements.geojson' });
-      const filtroAño = (y: number) => ['all', ['<=', ['get', 'y0'], y], ['>=', ['get', 'y1'], y]];
       // Chino arriba, pinyin debajo más pequeño, en la misma etiqueta — ver
       // https://docs.mapbox.com/style-spec/reference/expressions/#format.
       const textoChinoYPinyin = ['format', ['get', 'name'], {}, '\n', {}, ['get', 'py'], { 'font-scale': 0.72 }];
@@ -185,6 +202,7 @@ export default function MapView({
     const filtroAño = ['all', ['<=', ['get', 'y0'], year], ['>=', ['get', 'y1'], year]];
     map.setFilter('chgis-prefecture-labels', ['all', ['==', ['get', 'level'], 'prefecture'], filtroAño] as any);
     map.setFilter('chgis-county-labels', ['all', ['==', ['get', 'level'], 'county'], filtroAño] as any);
+    map.setFilter('chgis-boundaries-line', filtroAño as any);
   }, [year]);
 
   return <div ref={mapContainer} className="absolute inset-0 h-full w-full" />;
