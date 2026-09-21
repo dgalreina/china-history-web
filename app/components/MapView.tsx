@@ -112,6 +112,9 @@ export default function MapView({
       // defecto (text-allow-overlap: false).
       map.addSource('chgis', { type: 'geojson', data: '/data/chgis-settlements.geojson' });
       const filtroAño = (y: number) => ['all', ['<=', ['get', 'y0'], y], ['>=', ['get', 'y1'], y]];
+      // Chino arriba, pinyin debajo más pequeño, en la misma etiqueta — ver
+      // https://docs.mapbox.com/style-spec/reference/expressions/#format.
+      const textoChinoYPinyin = ['format', ['get', 'name'], {}, '\n', {}, ['get', 'py'], { 'font-scale': 0.72 }];
       map.addLayer({
         id: 'chgis-prefecture-labels',
         type: 'symbol',
@@ -122,7 +125,7 @@ export default function MapView({
         // modernos que deja visibles style.load — un valor inventado aquí
         // podría no existir en los glifos del estilo y dejar el texto en
         // blanco sin avisar.
-        layout: { 'text-field': ['get', 'name'], 'text-size': 13 },
+        layout: { 'text-field': textoChinoYPinyin as any, 'text-size': 13, 'text-line-height': 1.1 },
         paint: { 'text-color': '#e9e7e2', 'text-halo-color': '#1d1b19', 'text-halo-width': 1.2 },
       });
       map.addLayer({
@@ -131,7 +134,7 @@ export default function MapView({
         source: 'chgis',
         minzoom: 6,
         filter: ['all', ['==', ['get', 'level'], 'county'], filtroAño(yearRef.current)] as any,
-        layout: { 'text-field': ['get', 'name'], 'text-size': 11 },
+        layout: { 'text-field': textoChinoYPinyin as any, 'text-size': 11, 'text-line-height': 1.1 },
         paint: { 'text-color': '#e9e7e2', 'text-halo-color': '#1d1b19', 'text-halo-width': 1 },
       });
     });

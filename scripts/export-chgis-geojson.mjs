@@ -17,7 +17,7 @@ async function cargarNivel(nombreArchivo, level) {
     .filter((r) => typeof r.lng === 'number' && typeof r.lat === 'number')
     .map((r) => ({
       type: 'Feature',
-      properties: { name: r.nameCh, level, y0: r.begYear, y1: r.endYear },
+      properties: { name: r.nameCh, py: r.namePy, level, y0: r.begYear, y1: r.endYear },
       geometry: { type: 'Point', coordinates: [Math.round(r.lng * 1000) / 1000, Math.round(r.lat * 1000) / 1000] },
     }));
 }
