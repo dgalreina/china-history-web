@@ -4,11 +4,16 @@ import { useEffect, useRef } from 'react';
 import { formatYear, segmentAt } from './DynastyTimeline';
 import VasijaSpinner from './VasijaSpinner';
 
+export type HitoRelacionado = { lugar: string; año: number; titulo: string; lat: number; lng: number };
+
 export type Result = {
   lugar: string;
   año: string;
   contexto_ambiental: string;
   hito: { existe: boolean; descripcion: string; fiabilidad: string } | null;
+  // Otros hitos ya conocidos para seguir el hilo de la historia — solo
+  // presente cuando hito.existe (ver buscarHitosRelacionados en el backend).
+  hitos_relacionados: { futuros: HitoRelacionado[]; cercanos: HitoRelacionado[] } | null;
   imagen_url: string | null;
 };
 
@@ -90,7 +95,33 @@ export function ImagenPanel({ result, fase, children }: { result: Result; fase: 
 // conmutador Mapa/Texto flota arriba (ver page.tsx) — el hueco se deja con
 // `pt`, no con un padding lateral asimétrico, así el texto queda centrado
 // con el mismo margen a los dos lados.
-export function TextoPanel({ result, fase }: { result: Result; fase: Fase }) {
+// Fila clicable para un hito relacionado — lugar/año/título, salta ahí al
+// pulsar (ver onSaltarAHito en page.tsx: mueve mapa + slider + relanza la
+// consulta).
+function FilaHitoRelacionado({ hito, onClick }: { hito: HitoRelacionado; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full rounded-lg bg-paper-dark px-3 py-2 text-left text-[13px] text-ink-soft transition-colors hover:bg-line/50"
+    >
+      <span className="font-semibold text-ink">{formatYear(hito.año)}</span> · {hito.titulo}
+    </button>
+  );
+}
+
+export function TextoPanel({
+  result,
+  fase,
+  onSaltarAHito,
+}: {
+  result: Result;
+  fase: Fase;
+  onSaltarAHito: (lat: number, lng: number, año: number) => void;
+}) {
+  const relacionados = result.hitos_relacionados;
+  const hayRelacionados = !!relacionados && (relacionados.futuros.length > 0 || relacionados.cercanos.length > 0);
+
   return (
     <div className="relative h-full w-full bg-paper">
       <div
@@ -109,6 +140,31 @@ export function TextoPanel({ result, fase }: { result: Result; fase: Fase }) {
             <span className="ml-0.5 inline-block h-3.5 w-0.5 animate-pulse bg-seal align-middle" aria-hidden />
           )}
         </p>
+
+        {hayRelacionados && (
+          <div className="mt-6 border-t border-line pt-4">
+            {relacionados.futuros.length > 0 && (
+              <div className="mb-3">
+                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-stone">Sigue la historia</p>
+                <div className="flex flex-col gap-1.5">
+                  {relacionados.futuros.map((h, i) => (
+                    <FilaHitoRelacionado key={i} hito={h} onClick={() => onSaltarAHito(h.lat, h.lng, h.año)} />
+                  ))}
+                </div>
+              </div>
+            )}
+            {relacionados.cercanos.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-stone">Cerca de aquí</p>
+                <div className="flex flex-col gap-1.5">
+                  {relacionados.cercanos.map((h, i) => (
+                    <FilaHitoRelacionado key={i} hito={h} onClick={() => onSaltarAHito(h.lat, h.lng, h.año)} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-linear-to-b from-transparent via-paper/90 to-paper" />
     </div>

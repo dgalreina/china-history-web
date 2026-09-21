@@ -59,6 +59,7 @@ function mockResult(year: number, placeName: string | null): Result {
       descripcion: `Hito de ejemplo asociado a la dinastía ${dynasty.label}`,
       fiabilidad: 'media',
     },
+    hitos_relacionados: null,
     imagen_url: null,
   };
 }
@@ -163,7 +164,7 @@ export default function Home() {
 
     es.addEventListener('lugar', (e) => {
       const { lugar, año } = leer<{ lugar: string; año: string }>(e);
-      setResult({ lugar, año, contexto_ambiental: '', hito: null, imagen_url: null });
+      setResult({ lugar, año, contexto_ambiental: '', hito: null, hitos_relacionados: null, imagen_url: null });
       setFase('escribiendo');
       setVista('texto');
     });
@@ -179,6 +180,10 @@ export default function Home() {
     es.addEventListener('hito', (e) => {
       const { hito } = leer<{ hito: Result['hito'] }>(e);
       setResult((r) => (r ? { ...r, hito } : r));
+    });
+    es.addEventListener('hitosRelacionados', (e) => {
+      const { hitosRelacionados } = leer<{ hitosRelacionados: Result['hitos_relacionados'] }>(e);
+      setResult((r) => (r ? { ...r, hitos_relacionados: hitosRelacionados } : r));
     });
     es.addEventListener('imagen', (e) => {
       const { url } = leer<{ url: string | null }>(e);
@@ -219,6 +224,19 @@ export default function Home() {
       setVista('texto');
       return;
     }
+    consultar(lat, lng);
+  }, [consultar]);
+
+  // Saltar directo a un hito relacionado (ver TextoPanel): mueve año y
+  // lugar y relanza la consulta, como si el usuario hubiera pulsado ahí con
+  // el slider ya en ese año. yearRef se actualiza ya mismo (no esperar al
+  // efecto que lo sincroniza con `year`) para que consultar() lea el año
+  // nuevo desde la primerísima llamada.
+  const saltarAHito = useCallback((lat: number, lng: number, año: number) => {
+    yearRef.current = año;
+    setYear(año);
+    lastClickCoordsRef.current = { lat, lng };
+    setFocus({ lat, lng });
     consultar(lat, lng);
   }, [consultar]);
 
@@ -282,7 +300,7 @@ export default function Home() {
           // z-3: por encima de los controles de Mapbox (logo/atribución, z-2)
           // que viven dentro del contenedor del mapa.
           <div className="absolute inset-0 z-3">
-            <TextoPanel result={displayResult} fase={fase} />
+            <TextoPanel result={displayResult} fase={fase} onSaltarAHito={saltarAHito} />
           </div>
         )}
 

@@ -49,6 +49,26 @@ export default function MapView({
     mapRef.current?.easeTo({ center: [focus.lng, focus.lat], duration: 600 });
   }, [focus]);
 
+  // Mueve (o crea) el marcador de selección cuando cambia `focus` — cubre
+  // tanto el clic real en el mapa (que ya lo hace directo en el propio
+  // listener, esto solo repite lo mismo sin efecto visible) como saltar a
+  // un hito relacionado desde el texto (ver onSaltarAHito en page.tsx),
+  // que cambia `focus` sin pasar nunca por un clic real.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !focus) return;
+    const lngLat: mapboxgl.LngLatLike = [focus.lng, focus.lat];
+    if (markerRef.current) {
+      markerRef.current.setLngLat(lngLat);
+    } else {
+      const el = document.createElement('div');
+      el.className = 'h-4 w-4 rounded-full border-2 shadow-lg';
+      el.style.backgroundColor = 'var(--color-seal)';
+      el.style.borderColor = 'var(--color-paper)';
+      markerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' }).setLngLat(lngLat).addTo(map);
+    }
+  }, [focus]);
+
   // `onClick` cambia de identidad en cada render de la página (p. ej. al
   // mover el slider de año), pero el mapa no debe recrearse por eso — solo
   // queremos que el listener de clic llame siempre a la versión más reciente.
@@ -219,19 +239,10 @@ export default function MapView({
         lngLat = { lng, lat } as mapboxgl.LngLat;
       }
 
+      // El marcador se coloca/mueve solo, vía el efecto que escucha `focus`
+      // más arriba — onClick (page.tsx) actualiza `focus` con estas mismas
+      // coordenadas, ya ancladas al punto si correspondía.
       onClickRef.current(lngLat.lat, lngLat.lng);
-
-      if (markerRef.current) {
-        markerRef.current.setLngLat(lngLat);
-      } else {
-        const el = document.createElement('div');
-        el.className = 'h-4 w-4 rounded-full border-2 shadow-lg';
-        el.style.backgroundColor = 'var(--color-seal)';
-        el.style.borderColor = 'var(--color-paper)';
-        markerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' })
-          .setLngLat(e.lngLat)
-          .addTo(map);
-      }
     });
     map.on('load', () => {
       // Aviso propio (no del proveedor) de que el mapa se ha cargado, para
