@@ -31,8 +31,23 @@ export type DebugInfo = {
   // tavilyHito ni claudeHito en ese caso). Gana sobre tavilyHito cuando
   // existe.
   hitoConocido?: { encontrado: boolean; distanciaKm?: number };
+  // RAG sobre el libro para anclar la parte de arquitectura/urbanismo del
+  // prompt de imagen — solo corre sin hito y sin Tavily (ver
+  // construirPromptImagen). CLOTHING sigue siendo conocimiento de Claude,
+  // el libro no cubre bien vestimenta.
+  arquitecturaRag?: { cache: boolean; ms?: number; query?: string; resultado?: string | null; error?: string };
   claudeTexto?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: string; sinTavily?: boolean };
-  claudePromptImagen?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: string | null; sinTavily?: boolean; conHito?: boolean };
+  claudePromptImagen?: {
+    cache: boolean;
+    ms?: number;
+    modelo?: string;
+    systemPrompt?: string;
+    userPrompt?: string;
+    respuesta?: string | null;
+    sinTavily?: boolean;
+    conHito?: boolean;
+    conArquitecturaRag?: boolean;
+  };
   claudeHito?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: Hito };
   openaiImagen?: { cache: boolean; ms?: number; modelo?: string; tamaño?: string; estilo?: string; prompt?: string; resultado?: string; error?: string };
   totalMs?: number;
@@ -234,6 +249,16 @@ function PestañaTavily({ debug }: { debug: DebugInfo }) {
           <p className="text-ink-soft">Sin punto conocido cerca — no se ha investigado nada.</p>
         )}
       </Bloque>
+      {debug.arquitecturaRag && (
+        <Bloque titulo="Arquitectura/urbanismo (RAG sobre el libro)" ms={debug.arquitecturaRag.ms}>
+          <Campo etiqueta="Query enviada" valor={debug.arquitecturaRag.query} />
+          {debug.arquitecturaRag.error ? (
+            <Campo etiqueta="Error" valor={debug.arquitecturaRag.error} />
+          ) : (
+            <Campo etiqueta="Fragmentos encontrados" valor={debug.arquitecturaRag.resultado ?? '(sin resultados)'} />
+          )}
+        </Bloque>
+      )}
     </>
   );
 }
@@ -243,11 +268,17 @@ function BloqueClaude({
   info,
 }: {
   titulo: string;
-  info?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: unknown; sinTavily?: boolean; conHito?: boolean };
+  info?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: unknown; sinTavily?: boolean; conHito?: boolean; conArquitecturaRag?: boolean };
 }) {
   const respuesta = info?.respuesta;
   const respuestaTexto = typeof respuesta === 'string' ? respuesta : respuesta != null ? JSON.stringify(respuesta, null, 2) : undefined;
-  const nota = info?.conHito ? 'ilustra el hito' : info?.sinTavily ? 'sin búsqueda web' : undefined;
+  const nota = info?.conHito
+    ? 'ilustra el hito'
+    : info?.conArquitecturaRag
+      ? 'arquitectura del libro'
+      : info?.sinTavily
+        ? 'sin búsqueda web'
+        : undefined;
   return (
     <Bloque titulo={titulo} cache={info?.cache} ms={info?.ms} nota={nota}>
       <Campo etiqueta="Modelo" valor={info?.modelo} />
