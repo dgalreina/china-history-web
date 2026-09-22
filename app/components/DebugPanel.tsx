@@ -32,11 +32,26 @@ export type DebugInfo = {
   // existe.
   hitoConocido?: { encontrado: boolean; distanciaKm?: number };
   // RAG sobre el libro para anclar la parte de arquitectura/urbanismo del
-  // prompt de imagen — solo corre sin hito y sin Tavily (ver
+  // prompt de imagen — corre sin Tavily, haya o no hito (ver
   // construirPromptImagen). CLOTHING sigue siendo conocimiento de Claude,
   // el libro no cubre bien vestimenta.
   arquitecturaRag?: { cache: boolean; ms?: number; query?: string; resultado?: string | null; error?: string };
-  claudeTexto?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: string; sinTavily?: boolean; conHito?: boolean };
+  // Igual que arquitecturaRag, pero para la situación general del texto
+  // narrativo (ver sintetizarTextoUsuario) — cubre épocas que el libro
+  // documenta en términos arqueológicos más que de hitos puntuales
+  // (p. ej. Xia/Shang).
+  contextoRag?: { cache: boolean; ms?: number; query?: string; resultado?: string | null; error?: string };
+  claudeTexto?: {
+    cache: boolean;
+    ms?: number;
+    modelo?: string;
+    systemPrompt?: string;
+    userPrompt?: string;
+    respuesta?: string;
+    sinTavily?: boolean;
+    conHito?: boolean;
+    conContextoRag?: boolean;
+  };
   claudePromptImagen?: {
     cache: boolean;
     ms?: number;
@@ -259,6 +274,16 @@ function PestañaTavily({ debug }: { debug: DebugInfo }) {
           )}
         </Bloque>
       )}
+      {debug.contextoRag && (
+        <Bloque titulo="Situación general (RAG sobre el libro)" ms={debug.contextoRag.ms}>
+          <Campo etiqueta="Query enviada" valor={debug.contextoRag.query} />
+          {debug.contextoRag.error ? (
+            <Campo etiqueta="Error" valor={debug.contextoRag.error} />
+          ) : (
+            <Campo etiqueta="Fragmentos encontrados" valor={debug.contextoRag.resultado ?? '(sin resultados)'} />
+          )}
+        </Bloque>
+      )}
     </>
   );
 }
@@ -268,15 +293,31 @@ function BloqueClaude({
   info,
 }: {
   titulo: string;
-  info?: { cache: boolean; ms?: number; modelo?: string; systemPrompt?: string; userPrompt?: string; respuesta?: unknown; sinTavily?: boolean; conHito?: boolean; conArquitecturaRag?: boolean };
+  info?: {
+    cache: boolean;
+    ms?: number;
+    modelo?: string;
+    systemPrompt?: string;
+    userPrompt?: string;
+    respuesta?: unknown;
+    sinTavily?: boolean;
+    conHito?: boolean;
+    conArquitecturaRag?: boolean;
+    conContextoRag?: boolean;
+  };
 }) {
   const respuesta = info?.respuesta;
   const respuestaTexto = typeof respuesta === 'string' ? respuesta : respuesta != null ? JSON.stringify(respuesta, null, 2) : undefined;
-  // conHito y conArquitecturaRag pueden coincidir (el hito ancla el evento,
-  // el RAG ancla arquitectura/urbanismo) — se muestran los dos si es el caso.
-  const notas = [info?.conHito && 'ilustra el hito', info?.conArquitecturaRag && 'arquitectura del libro', !info?.conHito && !info?.conArquitecturaRag && info?.sinTavily && 'sin búsqueda web'].filter(
-    Boolean,
-  ) as string[];
+  // conHito, conArquitecturaRag y conContextoRag pueden coincidir (el hito
+  // ancla el evento, cada RAG ancla su parte) — se muestran todas las que
+  // apliquen.
+  const sinRag = !info?.conHito && !info?.conArquitecturaRag && !info?.conContextoRag;
+  const notas = [
+    info?.conHito && 'ilustra el hito',
+    info?.conArquitecturaRag && 'arquitectura del libro',
+    info?.conContextoRag && 'contexto del libro',
+    sinRag && info?.sinTavily && 'sin búsqueda web',
+  ].filter(Boolean) as string[];
   const nota = notas.length ? notas.join(' + ') : undefined;
   return (
     <Bloque titulo={titulo} cache={info?.cache} ms={info?.ms} nota={nota}>
