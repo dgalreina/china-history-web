@@ -31,9 +31,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="es"
-      className={`${manrope.variable} ${notoSerifSC.variable} h-full antialiased`}
+      className={`${manrope.variable} ${notoSerifSC.variable} h-full overflow-hidden overscroll-none antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="h-full flex flex-col overflow-hidden overscroll-none font-sans">{children}</body>
     </html>
   );
 }
