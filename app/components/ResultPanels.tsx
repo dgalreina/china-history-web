@@ -40,6 +40,17 @@ export function PortadaPanel({ children }: { children?: React.ReactNode }) {
   );
 }
 
+// Qué está haciendo el backend, en cada fase, mientras se ve el spinner de
+// la imagen — se apoya en las mismas fases que ya gobiernan el resto del
+// panel (page.tsx), no en un texto inventado que rote solo sin relación con
+// el progreso real.
+const ESTADO_CARGA: Record<Fase, string> = {
+  cargando: 'Localizando el lugar…',
+  escribiendo: 'Buscando material histórico…',
+  ilustrando: 'Generando imagen…',
+  listo: '',
+};
+
 // Mitad de la imagen: a sangre, con lugar y año encima. `children` es lo
 // que la página quiera colocar sobre la foto (el botón de consumo).
 export function ImagenPanel({ result, fase, children }: { result: Result; fase: Fase; children?: React.ReactNode }) {
@@ -70,8 +81,11 @@ export function ImagenPanel({ result, fase, children }: { result: Result; fase: 
       />
 
       {generandoImagen && (
-        <div className="absolute inset-0 flex items-center justify-center bg-ink/35">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-ink/35">
           <VasijaSpinner className="h-14 w-14 text-paper" />
+          <p aria-hidden className="texto-brillo text-sm font-semibold tracking-wide">
+            {ESTADO_CARGA[fase]}
+          </p>
           <span className="sr-only">Generando imagen…</span>
         </div>
       )}
