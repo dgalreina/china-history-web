@@ -181,6 +181,33 @@ export default function MapView({
         paint: { 'text-color': '#e9e7e2', 'text-halo-color': '#1d1b19', 'text-halo-width': 1 },
       });
 
+      // Recintos reales dentro de capitales bien documentadas (ver
+      // china-history-api/data/capitales/README.md +
+      // scripts/export-capitales-geojson.mjs) — a diferencia de los hitos
+      // (puntos, ±25 años de tolerancia), y0/y1 aquí es el rango de vigencia
+      // real de la estructura, sin tolerancia añadida. El relleno/contorno
+      // se añaden antes que los hitos (para que los puntos dorados que caigan
+      // dentro del recinto se sigan viendo por encima del relleno); el punto
+      // rojo de aviso se añade después (ver más abajo) para ganarle al
+      // dorado si coinciden en el mismo sitio.
+      map.addSource('capitales', { type: 'geojson', data: '/data/capitales.geojson' });
+      const filtroRecinto = (y: number) => ['all', ['==', ['get', 'tipo'], 'recinto'], filtroAño(y)];
+      const filtroPunto = (y: number) => ['all', ['==', ['get', 'tipo'], 'punto'], filtroAño(y)];
+      map.addLayer({
+        id: 'capitales-fill',
+        type: 'fill',
+        source: 'capitales',
+        filter: filtroRecinto(yearRef.current) as any,
+        paint: { 'fill-color': '#8f3b3b', 'fill-opacity': 0.25 },
+      });
+      map.addLayer({
+        id: 'capitales-outline',
+        type: 'line',
+        source: 'capitales',
+        filter: filtroRecinto(yearRef.current) as any,
+        paint: { 'line-color': '#c1443c', 'line-width': 1.5, 'line-opacity': 0.85 },
+      });
+
       // Puntos de hito extraídos del libro (ver
       // china-history-api/scripts/extract-hitos.mjs +
       // scripts/export-hitos-geojson.mjs) — de antemano, antes de hacer
@@ -197,6 +224,27 @@ export default function MapView({
         paint: {
           'circle-radius': 5,
           'circle-color': '#d4a24c',
+          'circle-stroke-width': 1.5,
+          'circle-stroke-color': '#1d1b19',
+        },
+      });
+
+      // Punto rojo de aviso de capital (ver capitales-fill/outline más
+      // arriba) — se añade DESPUÉS de hitos-circle para ganarle al dorado
+      // si coinciden en el mismo sitio, como con la Ciudad Prohibida, donde
+      // casi siempre hay un hito justo ahí también. Con el mapa alejado, el
+      // recinto real (un par de cientos de metros) es invisible a la
+      // escala de toda China; maxzoom lo retira cuando el recinto ya se
+      // empieza a distinguir por su cuenta.
+      map.addLayer({
+        id: 'capitales-punto',
+        type: 'circle',
+        source: 'capitales',
+        maxzoom: 11,
+        filter: filtroPunto(yearRef.current) as any,
+        paint: {
+          'circle-radius': 5,
+          'circle-color': '#e0827a',
           'circle-stroke-width': 1.5,
           'circle-stroke-color': '#1d1b19',
         },
@@ -274,6 +322,11 @@ export default function MapView({
     map.setFilter('chgis-county-labels', ['all', ['==', ['get', 'level'], 'county'], filtroAño] as any);
     map.setFilter('chgis-boundaries-line', filtroAño as any);
     if (map.getLayer('hitos-circle')) map.setFilter('hitos-circle', filtroAño as any);
+    const filtroRecinto = ['all', ['==', ['get', 'tipo'], 'recinto'], filtroAño];
+    const filtroPunto = ['all', ['==', ['get', 'tipo'], 'punto'], filtroAño];
+    if (map.getLayer('capitales-fill')) map.setFilter('capitales-fill', filtroRecinto as any);
+    if (map.getLayer('capitales-outline')) map.setFilter('capitales-outline', filtroRecinto as any);
+    if (map.getLayer('capitales-punto')) map.setFilter('capitales-punto', filtroPunto as any);
   }, [year]);
 
   return <div ref={mapContainer} className="absolute inset-0 h-full w-full" />;
