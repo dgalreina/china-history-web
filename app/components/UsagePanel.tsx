@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type Usage = {
   mapLoads: number;
@@ -33,7 +33,11 @@ function costeAproxEur(inputTokens: number, outputTokens: number): string {
   return eur.toLocaleString('es', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 });
 }
 
-export default function UsagePanel({
+// Sin botón ni modal propios — vive dentro de la pestaña "Ajustes" del
+// menú único (ver SettingsPanel.tsx). Pide el consumo al montarse, o sea
+// cada vez que se entra a esta pestaña (mismo comportamiento que antes,
+// que pedía consumo fresco cada vez que se abría su propio panel).
+export function UsagePanelContent({
   apiUrl,
   model,
   imageModel,
@@ -54,137 +58,107 @@ export default function UsagePanel({
   onLengthChange: (length: LengthChoice) => void;
   onResolutionChange: (resolution: ImageResolution) => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [usage, setUsage] = useState<Usage | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const abrir = async () => {
-    setOpen(true);
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`${apiUrl}/usage`);
-      setUsage(await res.json());
-    } catch {
-      setError('No se ha podido consultar el consumo.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    let cancelado = false;
+    fetch(`${apiUrl}/usage`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelado) setUsage(data);
+      })
+      .catch(() => {
+        if (!cancelado) setError('No se ha podido consultar el consumo.');
+      })
+      .finally(() => {
+        if (!cancelado) setLoading(false);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [apiUrl]);
 
   return (
     <>
-      <button
-        type="button"
-        onClick={abrir}
-        aria-label="Ver consumo y ajustes"
-        className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full border border-paper/35 bg-ink/55 text-paper backdrop-blur-sm"
-      >
-        <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 3v18h18" />
-          <path d="M7 15l4-6 3 3 5-8" />
-        </svg>
-      </button>
-
-      {open && (
-        <div
-          className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="flex max-h-[85vh] w-full max-w-sm flex-col rounded-xl border border-line bg-paper text-ink shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-5 pt-5">
-              <h2 className="font-brush text-lg font-semibold">Consumo y ajustes</h2>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar" className="text-ink-soft">
-                ✕
-              </button>
-            </div>
-
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
-            <div className="mt-4 space-y-3 text-sm">
-              <div>
-                <p className="mb-1 font-semibold">Modelo (texto)</p>
-                <div className="flex gap-2">
-                  <ToggleButton etiqueta="Sonnet" activo={model === 'sonnet'} onClick={() => onModelChange('sonnet')} />
-                  <ToggleButton etiqueta="Haiku" activo={model === 'haiku'} onClick={() => onModelChange('haiku')} />
-                </div>
-              </div>
-
-              <div>
-                <p className="mb-1 font-semibold">Modelo (prompt de imagen)</p>
-                <div className="flex gap-2">
-                  <ToggleButton etiqueta="Sonnet" activo={imageModel === 'sonnet'} onClick={() => onImageModelChange('sonnet')} />
-                  <ToggleButton etiqueta="Haiku" activo={imageModel === 'haiku'} onClick={() => onImageModelChange('haiku')} />
-                </div>
-              </div>
-
-              <div>
-                <p className="mb-1 font-semibold">Longitud del texto</p>
-                <div className="flex gap-2">
-                  <ToggleButton etiqueta="Corto" activo={length === 'corto'} onClick={() => onLengthChange('corto')} />
-                  <ToggleButton etiqueta="Extenso" activo={length === 'extenso'} onClick={() => onLengthChange('extenso')} />
-                </div>
-              </div>
-
-              <div>
-                <p className="mb-1 font-semibold">Resolución de imagen</p>
-                <div className="flex gap-2">
-                  <ToggleButton etiqueta="Alta" activo={resolution === 'alta'} onClick={() => onResolutionChange('alta')} />
-                  <ToggleButton etiqueta="Media" activo={resolution === 'media'} onClick={() => onResolutionChange('media')} />
-                  <ToggleButton etiqueta="Baja" activo={resolution === 'baja'} onClick={() => onResolutionChange('baja')} />
-                </div>
-              </div>
-
-              <p className="text-xs text-ink-soft">
-                Se aplica al próximo clic en el mapa. El modelo de imagen solo redacta el prompt visual en
-                inglés (no se muestra) — no tiene por qué coincidir con el del texto. La resolución cambia el
-                peso de la imagen (es de sobra con la más baja para móvil), pero no acelera la generación con
-                este modelo — mira el panel de debug para comprobarlo.
-              </p>
-            </div>
-
-            <hr className="my-4 border-line" />
-
-            {loading && <p className="text-sm text-ink-soft">Cargando consumo...</p>}
-            {error && <p className="text-sm text-ink-soft">{error}</p>}
-
-            {usage && !loading && (
-              <div className="space-y-3 text-sm">
-                <Fila etiqueta="Cargas de mapa (Mapbox)" valor={usage.mapLoads} limite={usage.limites.mapLoads} />
-                <Fila etiqueta="Geocodificación (Mapbox)" valor={usage.geocodeCalls} limite={usage.limites.geocodeCalls} />
-                <Fila etiqueta="Búsquedas (Tavily)" valor={usage.tavilySearches} limite={usage.limites.tavilySearches} />
-
-                <div className="rounded-lg border border-line p-3">
-                  <p className="font-semibold">Anthropic (Claude)</p>
-                  <p className="mt-1 text-ink-soft">{usage.anthropicRequests.toLocaleString('es')} llamadas</p>
-                  <p className="text-ink-soft">{usage.anthropicInputTokens.toLocaleString('es')} tokens de entrada</p>
-                  <p className="text-ink-soft">{usage.anthropicOutputTokens.toLocaleString('es')} tokens de salida</p>
-                </div>
-
-                <div className="rounded-lg border border-line p-3">
-                  <p className="font-semibold">OpenAI (imágenes)</p>
-                  <p className="mt-1 text-ink-soft">{usage.openaiImages.toLocaleString('es')} imágenes generadas</p>
-                  <p className="text-ink-soft">{usage.openaiInputTokens.toLocaleString('es')} tokens de entrada</p>
-                  <p className="text-ink-soft">{usage.openaiOutputTokens.toLocaleString('es')} tokens de salida</p>
-                  <p className="mt-1 font-semibold text-seal">
-                    ≈ {costeAproxEur(usage.openaiInputTokens, usage.openaiOutputTokens)} aprox.
-                  </p>
-                  <p className="mt-1 text-xs text-ink-soft">
-                    Estimación muy aproximada (no hay precio oficial por token publicado) — compara con el gasto
-                    real en <span className="whitespace-nowrap">platform.openai.com/usage</span>.
-                  </p>
-                </div>
-
-                <p className="text-xs text-ink-soft">
-                  Contador propio desde que existe la app (no la facturación oficial de cada proveedor).
-                </p>
-              </div>
-            )}
-            </div>
+      <div className="space-y-3 text-sm">
+        <div>
+          <p className="mb-1 font-semibold">Modelo (texto)</p>
+          <div className="flex gap-2">
+            <ToggleButton etiqueta="Sonnet" activo={model === 'sonnet'} onClick={() => onModelChange('sonnet')} />
+            <ToggleButton etiqueta="Haiku" activo={model === 'haiku'} onClick={() => onModelChange('haiku')} />
           </div>
+        </div>
+
+        <div>
+          <p className="mb-1 font-semibold">Modelo (prompt de imagen)</p>
+          <div className="flex gap-2">
+            <ToggleButton etiqueta="Sonnet" activo={imageModel === 'sonnet'} onClick={() => onImageModelChange('sonnet')} />
+            <ToggleButton etiqueta="Haiku" activo={imageModel === 'haiku'} onClick={() => onImageModelChange('haiku')} />
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-1 font-semibold">Longitud del texto</p>
+          <div className="flex gap-2">
+            <ToggleButton etiqueta="Corto" activo={length === 'corto'} onClick={() => onLengthChange('corto')} />
+            <ToggleButton etiqueta="Extenso" activo={length === 'extenso'} onClick={() => onLengthChange('extenso')} />
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-1 font-semibold">Resolución de imagen</p>
+          <div className="flex gap-2">
+            <ToggleButton etiqueta="Alta" activo={resolution === 'alta'} onClick={() => onResolutionChange('alta')} />
+            <ToggleButton etiqueta="Media" activo={resolution === 'media'} onClick={() => onResolutionChange('media')} />
+            <ToggleButton etiqueta="Baja" activo={resolution === 'baja'} onClick={() => onResolutionChange('baja')} />
+          </div>
+        </div>
+
+        <p className="text-xs text-ink-soft">
+          Se aplica al próximo clic en el mapa. El modelo de imagen solo redacta el prompt visual en
+          inglés (no se muestra) — no tiene por qué coincidir con el del texto. La resolución cambia el
+          peso de la imagen (es de sobra con la más baja para móvil), pero no acelera la generación con
+          este modelo — mira el panel de debug para comprobarlo.
+        </p>
+      </div>
+
+      <hr className="my-4 border-line" />
+
+      {loading && <p className="text-sm text-ink-soft">Cargando consumo...</p>}
+      {error && <p className="text-sm text-ink-soft">{error}</p>}
+
+      {usage && !loading && (
+        <div className="space-y-3 text-sm">
+          <Fila etiqueta="Cargas de mapa (Mapbox)" valor={usage.mapLoads} limite={usage.limites.mapLoads} />
+          <Fila etiqueta="Geocodificación (Mapbox)" valor={usage.geocodeCalls} limite={usage.limites.geocodeCalls} />
+          <Fila etiqueta="Búsquedas (Tavily)" valor={usage.tavilySearches} limite={usage.limites.tavilySearches} />
+
+          <div className="rounded-lg border border-line p-3">
+            <p className="font-semibold">Anthropic (Claude)</p>
+            <p className="mt-1 text-ink-soft">{usage.anthropicRequests.toLocaleString('es')} llamadas</p>
+            <p className="text-ink-soft">{usage.anthropicInputTokens.toLocaleString('es')} tokens de entrada</p>
+            <p className="text-ink-soft">{usage.anthropicOutputTokens.toLocaleString('es')} tokens de salida</p>
+          </div>
+
+          <div className="rounded-lg border border-line p-3">
+            <p className="font-semibold">OpenAI (imágenes)</p>
+            <p className="mt-1 text-ink-soft">{usage.openaiImages.toLocaleString('es')} imágenes generadas</p>
+            <p className="text-ink-soft">{usage.openaiInputTokens.toLocaleString('es')} tokens de entrada</p>
+            <p className="text-ink-soft">{usage.openaiOutputTokens.toLocaleString('es')} tokens de salida</p>
+            <p className="mt-1 font-semibold text-seal">
+              ≈ {costeAproxEur(usage.openaiInputTokens, usage.openaiOutputTokens)} aprox.
+            </p>
+            <p className="mt-1 text-xs text-ink-soft">
+              Estimación muy aproximada (no hay precio oficial por token publicado) — compara con el gasto
+              real en <span className="whitespace-nowrap">platform.openai.com/usage</span>.
+            </p>
+          </div>
+
+          <p className="text-xs text-ink-soft">
+            Contador propio desde que existe la app (no la facturación oficial de cada proveedor).
+          </p>
         </div>
       )}
     </>

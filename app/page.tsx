@@ -3,9 +3,9 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import MapView from './components/MapView';
 import DynastyTimeline, { segmentAt } from './components/DynastyTimeline';
 import { ImagenPanel, PortadaPanel, TextoPanel, type Fase, type Result } from './components/ResultPanels';
-import UsagePanel from './components/UsagePanel';
-import StyleSelector, { type ImageStyle } from './components/StyleSelector';
-import DebugPanel, { type DebugInfo } from './components/DebugPanel';
+import SettingsPanel from './components/SettingsPanel';
+import { type ImageStyle } from './components/StyleSelector';
+import { type DebugInfo } from './components/DebugPanel';
 
 // En local usa el backend de tu máquina; en producción, configura
 // NEXT_PUBLIC_API_URL en las variables de entorno de DigitalOcean con la
@@ -260,25 +260,24 @@ export default function Home() {
   useEffect(() => () => eventSourceRef.current?.close(), []);
 
   const hayResultado = displayResult !== null;
-  // El estilo vive como acceso directo en la esquina superior de la foto
-  // (se cambia a menudo); las métricas, que se consultan poco, bajan a la
-  // esquina inferior.
-  const styleSelector = <StyleSelector style={style} onStyleChange={setStyle} />;
-  const usagePanel = (
-    <div className="flex items-center gap-2">
-      <DebugPanel debug={debug} />
-      <UsagePanel
-        apiUrl={API_URL}
-        model={model}
-        imageModel={imageModel}
-        length={length}
-        resolution={resolution}
-        onModelChange={setModel}
-        onImageModelChange={setImageModel}
-        onLengthChange={setLength}
-        onResolutionChange={setResolution}
-      />
-    </div>
+  // Un único botón de ajustes (engranaje) agrupa estilo/consumo/debug —
+  // antes eran tres iconos sueltos sobre la foto; se consolidaron porque
+  // ninguno se abre a menudo (petición del usuario).
+  const settingsPanel = (
+    <SettingsPanel
+      style={style}
+      onStyleChange={setStyle}
+      debug={debug}
+      apiUrl={API_URL}
+      model={model}
+      imageModel={imageModel}
+      length={length}
+      resolution={resolution}
+      onModelChange={setModel}
+      onImageModelChange={setImageModel}
+      onLengthChange={setLength}
+      onResolutionChange={setResolution}
+    />
   );
 
   // Dos mitades (arriba/abajo en móvil, izquierda/derecha en pantallas
@@ -289,13 +288,11 @@ export default function Home() {
       <div className="absolute inset-x-0 top-0 h-1/2 md:inset-y-0 md:h-full md:w-1/2">
         {hayResultado ? (
           <ImagenPanel result={displayResult} fase={fase}>
-            <div className="absolute right-4 top-4">{styleSelector}</div>
-            <div className="absolute bottom-4 right-4">{usagePanel}</div>
+            <div className="absolute right-4 top-4">{settingsPanel}</div>
           </ImagenPanel>
         ) : (
           <PortadaPanel>
-            <div className="absolute right-4 top-4">{styleSelector}</div>
-            <div className="absolute bottom-4 right-4">{usagePanel}</div>
+            <div className="absolute right-4 top-4">{settingsPanel}</div>
           </PortadaPanel>
         )}
       </div>

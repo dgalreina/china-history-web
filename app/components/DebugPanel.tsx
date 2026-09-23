@@ -88,77 +88,49 @@ function formatMs(ms?: number): string | null {
 // pantalla. No se persiste en ningún sitio — viaja con la respuesta de esa
 // consulta y desaparece al pedir otra, es un sustituto de mirar los logs
 // de DO.
-export default function DebugPanel({ debug }: { debug: DebugInfo | null }) {
-  const [open, setOpen] = useState(false);
+// Sin botón ni modal propios — vive dentro de la pestaña "Debug" del menú
+// de ajustes único (ver SettingsPanel.tsx), que ya pone el modal y el
+// cierre. Antes tenía su propio icono flotante sobre la foto; se
+// consolidó junto con estilo/consumo en un solo botón porque casi no se
+// abre (petición del usuario).
+export function DebugPanelContent({ debug }: { debug: DebugInfo | null }) {
   const [pestaña, setPestaña] = useState<Pestaña>('lugar');
+
+  if (!debug) return <p className="text-ink-soft">Sin datos todavía — haz una consulta primero.</p>;
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        disabled={!debug}
-        aria-label="Ver debug de esta consulta"
-        className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full border border-paper/35 bg-ink/55 text-paper backdrop-blur-sm disabled:opacity-40"
-      >
-        <svg viewBox="0 0 24 24" className="h-4.25 w-4.25" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 9h.01M15 9h.01M9 15c.83.67 1.87 1 3 1s2.17-.33 3-1" />
-          <rect x="3" y="4" width="18" height="16" rx="3" />
-          <path d="M8 4V2M16 4V2" />
-        </svg>
-      </button>
+      <div className="flex items-baseline gap-2">
+        {debug.totalMs !== undefined && <span className="text-xs font-semibold text-seal">{formatMs(debug.totalMs)} total</span>}
+      </div>
 
-      {open && debug && (
-        <div
-          className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="flex max-h-[85vh] w-full max-w-sm flex-col rounded-xl border border-line bg-paper text-ink shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-5 pt-5">
-              <div className="flex items-baseline gap-2">
-                <h2 className="font-brush text-lg font-semibold">Debug</h2>
-                {debug.totalMs !== undefined && (
-                  <span className="text-xs font-semibold text-seal">{formatMs(debug.totalMs)} total</span>
-                )}
-              </div>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar" className="text-ink-soft">
-                ✕
-              </button>
-            </div>
-
-            {debug.tavilyPausado && (
-              <p className="mx-5 mt-3 rounded-lg bg-seal/10 px-3 py-2 text-[11px] font-semibold text-seal">
-                Tavily desactivado — texto e imagen generados solo con el conocimiento de Claude; el hito solo aparece si hay un punto ya conocido cerca.
-              </p>
-            )}
-
-            <div className="flex gap-1 px-5 pt-3">
-              {PESTAÑAS.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPestaña(p)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-                    pestaña === p ? 'bg-ink text-paper' : 'bg-paper-dark text-ink-soft'
-                  }`}
-                >
-                  {ETIQUETA_PESTAÑA[p]}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-3 min-h-0 flex-1 overflow-y-auto px-5 pb-5 text-sm">
-              {pestaña === 'lugar' && <PestañaLugar debug={debug} />}
-              {pestaña === 'tavily' && <PestañaTavily debug={debug} />}
-              {pestaña === 'claude' && <PestañaClaude debug={debug} />}
-              {pestaña === 'openai' && <PestañaOpenai debug={debug} />}
-            </div>
-          </div>
-        </div>
+      {debug.tavilyPausado && (
+        <p className="mt-3 rounded-lg bg-seal/10 px-3 py-2 text-[11px] font-semibold text-seal">
+          Tavily desactivado — texto e imagen generados solo con el conocimiento de Claude; el hito solo aparece si hay un punto ya conocido cerca.
+        </p>
       )}
+
+      <div className="flex gap-1 pt-3">
+        {PESTAÑAS.map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => setPestaña(p)}
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
+              pestaña === p ? 'bg-ink text-paper' : 'bg-paper-dark text-ink-soft'
+            }`}
+          >
+            {ETIQUETA_PESTAÑA[p]}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-3 text-sm">
+        {pestaña === 'lugar' && <PestañaLugar debug={debug} />}
+        {pestaña === 'tavily' && <PestañaTavily debug={debug} />}
+        {pestaña === 'claude' && <PestañaClaude debug={debug} />}
+        {pestaña === 'openai' && <PestañaOpenai debug={debug} />}
+      </div>
     </>
   );
 }
