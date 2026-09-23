@@ -43,7 +43,7 @@ export type DebugInfo = {
   contextoRag?: { cache: boolean; ms?: number; query?: string; resultado?: string | null; error?: string };
   // Recinto real (Ciudad Prohibida, etc.) en el que cae el punto, cuando no
   // hay hito — ver buscarCapital. Solo se rellena en ese caso.
-  capital?: { nombre: string; lugar: string } | null;
+  capital?: { nombre: string; lugar: string; tipo: 'palacio' | 'templo' } | null;
   claudeTexto?: {
     cache: boolean;
     ms?: number;
@@ -290,8 +290,9 @@ function PestañaTavily({ debug }: { debug: DebugInfo }) {
       {debug.capital && (
         <Bloque titulo="Recinto (dentro de capital conocida)">
           <p className="text-ink-soft">
-            El punto cae dentro de <span className="font-semibold text-ink">{debug.capital.nombre}</span> ({debug.capital.lugar}) — el
-            texto y la imagen se centran en la vida de palacio, con interior.
+            El punto cae dentro de <span className="font-semibold text-ink">{debug.capital.nombre}</span> ({debug.capital.lugar},{' '}
+            {debug.capital.tipo}) — el texto y la imagen se centran en{' '}
+            {debug.capital.tipo === 'palacio' ? 'la vida de palacio, con interior' : 'la vida ritual del templo'}.
           </p>
         </Bloque>
       )}

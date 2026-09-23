@@ -31,15 +31,19 @@ function centroide(geometry) {
   return [Math.round((sumaLng / puntos.length) * 1000) / 1000, Math.round((sumaLat / puntos.length) * 1000) / 1000];
 }
 
+// "tipo" aquí es el ROL de la feature en el mapa (recinto/punto, ver
+// MapView.tsx); "categoria" es el tipo de sitio en sí (palacio/templo,
+// ver china-history-api data/capitales/README.md) — dos cosas distintas
+// que comparten nombre corto por poco, cuidado al tocar esto.
 const features = capitales.flatMap((c) => [
   {
     type: 'Feature',
-    properties: { tipo: 'recinto', nombre: c.nombre, lugar: c.lugar, y0: c.y0, y1: c.y1 },
+    properties: { tipo: 'recinto', categoria: c.tipo, nombre: c.nombre, lugar: c.lugar, y0: c.y0, y1: c.y1 },
     geometry: c.geometry,
   },
   {
     type: 'Feature',
-    properties: { tipo: 'punto', nombre: c.nombre, lugar: c.lugar, y0: c.y0, y1: c.y1 },
+    properties: { tipo: 'punto', categoria: c.tipo, nombre: c.nombre, lugar: c.lugar, y0: c.y0, y1: c.y1 },
     geometry: { type: 'Point', coordinates: centroide(c.geometry) },
   },
 ]);
