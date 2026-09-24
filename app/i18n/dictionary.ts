@@ -60,6 +60,9 @@ export type Textos = {
     placeholder: string;
     cargandoHitos: string;
     sinResultados: string;
+    categoriaPalacio: string;
+    categoriaTemplo: string;
+    categoriaMansion: string;
   };
   dynastyTimeline: {
     añoAnterior: string;
@@ -201,6 +204,9 @@ const es: Textos = {
     placeholder: 'Nombre, lugar o año...',
     cargandoHitos: 'Cargando hitos...',
     sinResultados: 'Sin resultados.',
+    categoriaPalacio: 'Palacio',
+    categoriaTemplo: 'Templo',
+    categoriaMansion: 'Mansión',
   },
   dynastyTimeline: {
     añoAnterior: 'Año anterior',
@@ -283,6 +289,9 @@ const en: Textos = {
     placeholder: 'Name, place or year...',
     cargandoHitos: 'Loading milestones...',
     sinResultados: 'No results.',
+    categoriaPalacio: 'Palace',
+    categoriaTemplo: 'Temple',
+    categoriaMansion: 'Mansion',
   },
   dynastyTimeline: {
     añoAnterior: 'Previous year',
@@ -364,6 +373,9 @@ const zh: Textos = {
     placeholder: '名称、地点或年份...',
     cargandoHitos: '正在加载历史事件...',
     sinResultados: '没有结果。',
+    categoriaPalacio: '宫殿',
+    categoriaTemplo: '寺庙',
+    categoriaMansion: '王府',
   },
   dynastyTimeline: {
     añoAnterior: '上一年',
