@@ -1,5 +1,8 @@
 'use client';
 
+import { useLanguage } from '../i18n/LanguageContext';
+import { formatYear as formatYearI18n } from '../i18n/dictionary';
+
 const MIN_YEAR = -2000;
 const MAX_YEAR = 2000;
 const STEP = 10;
@@ -50,12 +53,13 @@ export function segmentAt(year: number) {
 // el segmento vecino, así que se omite y solo queda el color + tooltip.
 const LABEL_MIN_SPAN = 80;
 
-export function formatYear(year: number) {
-  if (year < 0) return `${-year} a.C.`;
-  return `${year} d.C.`;
-}
+// Reexportado desde aquí (en vez de que cada componente importe de
+// ../i18n/dictionary directamente) para no tocar los imports ya existentes
+// en ResultPanels.tsx/BuscadorHitos.tsx — mismo nombre, ahora pide `lang`.
+export const formatYear = formatYearI18n;
 
 export default function DynastyTimeline({ year, onChange }: { year: number; onChange: (year: number) => void }) {
+  const { lang, t } = useLanguage();
   const percent = ((year - MIN_YEAR) / (MAX_YEAR - MIN_YEAR)) * 100;
   const current = segmentAt(year);
 
@@ -68,7 +72,7 @@ export default function DynastyTimeline({ year, onChange }: { year: number; onCh
         <button
           type="button"
           onClick={() => onChange(Math.max(MIN_YEAR, year - STEP))}
-          aria-label="Año anterior"
+          aria-label={t.dynastyTimeline.añoAnterior}
           className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink text-paper shadow active:scale-95"
         >
           <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -77,13 +81,13 @@ export default function DynastyTimeline({ year, onChange }: { year: number; onCh
         </button>
 
         <div className="whitespace-nowrap rounded bg-ink px-2 py-1 text-xs font-semibold text-paper shadow">
-          {current.label} · {formatYear(year)}
+          {t.dinastias[current.label]} · {formatYear(year, lang)}
         </div>
 
         <button
           type="button"
           onClick={() => onChange(Math.min(MAX_YEAR, year + STEP))}
-          aria-label="Año siguiente"
+          aria-label={t.dynastyTimeline.añoSiguiente}
           className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink text-paper shadow active:scale-95"
         >
           <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -113,7 +117,7 @@ export default function DynastyTimeline({ year, onChange }: { year: number; onCh
                 backgroundColor: activo ? seg.colorTerroso : 'rgba(233,231,226,0.12)',
                 boxShadow: activo ? `0 0 12px ${seg.colorTerroso}b3` : undefined,
               }}
-              title={`${seg.label} (${formatYear(seg.start)} – ${formatYear(seg.end)})`}
+              title={`${t.dinastias[seg.label]} (${formatYear(seg.start, lang)} – ${formatYear(seg.end, lang)})`}
             />
           );
         })}
@@ -149,7 +153,7 @@ export default function DynastyTimeline({ year, onChange }: { year: number; onCh
         step={STEP}
         value={year}
         onChange={(e) => onChange(Number(e.target.value))}
-        aria-label="Año"
+        aria-label={t.dynastyTimeline.año}
         className="timeline-range absolute inset-0 h-full w-full cursor-pointer opacity-0"
       />
     </div>

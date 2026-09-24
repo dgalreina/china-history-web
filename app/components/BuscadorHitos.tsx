@@ -2,11 +2,32 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { formatYear } from './DynastyTimeline';
+import { useLanguage } from '../i18n/LanguageContext';
+import type { Lang } from '../i18n/dictionary';
 
 type HitoFeature = {
-  properties: { titulo: string; lugar: string; year: number; y0: number; y1: number };
+  properties: {
+    titulo: string;
+    lugar: string;
+    year: number;
+    y0: number;
+    y1: number;
+    titulo_en?: string;
+    lugar_en?: string;
+    titulo_zh?: string;
+    lugar_zh?: string;
+  };
   geometry: { type: 'Point'; coordinates: [number, number] };
 };
+
+// Traducción en batch (ver china-history-api/scripts/translate-hitos.mjs) —
+// un hito sin traducir (o si falló esa entrada) cae a los campos en
+// español, igual que hace el backend con hitos_conocidos.
+function tituloLugar(props: HitoFeature['properties'], lang: Lang): { titulo: string; lugar: string } {
+  if (lang === 'en') return { titulo: props.titulo_en ?? props.titulo, lugar: props.lugar_en ?? props.lugar };
+  if (lang === 'zh') return { titulo: props.titulo_zh ?? props.titulo, lugar: props.lugar_zh ?? props.lugar };
+  return { titulo: props.titulo, lugar: props.lugar };
+}
 
 // Botón (lupa) + pantalla completa para saltar directo a cualquiera de los
 // ~1000 hitos conocidos (los mismos puntos dorados del mapa, ver
@@ -17,11 +38,12 @@ type HitoFeature = {
 // (y de paso evita líos de recorte en móvil que sí tenía como popup). El
 // botón cambia de lupa a "cerrar" mientras está abierto.
 export function BuscadorHitosBoton({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+  const { t } = useLanguage();
   return (
     <button
       type="button"
       onClick={onToggle}
-      aria-label={open ? 'Cerrar búsqueda' : 'Buscar un hito'}
+      aria-label={open ? t.buscadorHitos.cerrarBusqueda : t.buscadorHitos.buscarUnHito}
       aria-expanded={open}
       className="flex h-5.5 w-5.5 items-center justify-center rounded-full border border-line bg-paper/80 text-ink-soft shadow-sm backdrop-blur-sm"
     >
@@ -50,6 +72,7 @@ export function BuscadorHitosPanel({
   year: number;
   onSaltarAHito: (lat: number, lng: number, año: number) => void;
 }) {
+  const { lang, t } = useLanguage();
   const [hitos, setHitos] = useState<HitoFeature[] | null>(null);
   const [busqueda, setBusqueda] = useState('');
   // Derivado de `hitos` en vez de un estado propio: mientras no llega
@@ -80,9 +103,12 @@ export function BuscadorHitosPanel({
     const lista =
       añoBuscado !== null
         ? hitos.filter((h) => h.properties.y0 <= añoBuscado && añoBuscado <= h.properties.y1)
-        : hitos.filter((h) => `${h.properties.titulo} ${h.properties.lugar}`.toLowerCase().includes(q.toLowerCase()));
+        : hitos.filter((h) => {
+            const { titulo, lugar } = tituloLugar(h.properties, lang);
+            return `${titulo} ${lugar}`.toLowerCase().includes(q.toLowerCase());
+          });
     return [...lista].sort((a, b) => a.properties.year - b.properties.year);
-  }, [hitos, busqueda, year]);
+  }, [hitos, busqueda, year, lang]);
 
   if (!open) return null;
 
@@ -99,28 +125,31 @@ export function BuscadorHitosPanel({
           type="text"
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
-          placeholder="Nombre, lugar o año..."
+          placeholder={t.buscadorHitos.placeholder}
           className="mb-3 w-full rounded-full border border-line bg-paper-dark px-3.5 py-1.5 text-ink outline-none placeholder:text-stone"
         />
 
-        {cargando && <p className="py-4 text-center text-ink-soft">Cargando hitos...</p>}
-        {!cargando && filtrados.length === 0 && <p className="py-4 text-center text-ink-soft">Sin resultados.</p>}
+        {cargando && <p className="py-4 text-center text-ink-soft">{t.buscadorHitos.cargandoHitos}</p>}
+        {!cargando && filtrados.length === 0 && <p className="py-4 text-center text-ink-soft">{t.buscadorHitos.sinResultados}</p>}
         {/* Mismo recuadro que "hitos futuros/cercanos" en TextoPanel
             (FilaHitoRelacionado) — para que se note que son pulsables, no
             texto suelto. */}
         <div className="flex flex-col gap-1.5">
-          {filtrados.map((h, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => elegir(h)}
-              className="w-full rounded-lg bg-paper-dark px-3 py-2 text-left text-[13px] text-ink-soft transition-colors hover:bg-line/50"
-            >
-              <span className="font-semibold text-ink">{formatYear(h.properties.year)}</span>
-              {' · '}
-              {h.properties.lugar}: {h.properties.titulo}
-            </button>
-          ))}
+          {filtrados.map((h, i) => {
+            const { titulo, lugar } = tituloLugar(h.properties, lang);
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => elegir(h)}
+                className="w-full rounded-lg bg-paper-dark px-3 py-2 text-left text-[13px] text-ink-soft transition-colors hover:bg-line/50"
+              >
+                <span className="font-semibold text-ink">{formatYear(h.properties.year, lang)}</span>
+                {' · '}
+                {lugar}: {titulo}
+              </button>
+            );
+          })}
         </div>
       </div>
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-linear-to-b from-transparent via-paper/90 to-paper" />

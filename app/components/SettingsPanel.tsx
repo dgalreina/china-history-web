@@ -4,14 +4,15 @@ import { useState } from 'react';
 import { StyleSelectorContent, type ImageStyle } from './StyleSelector';
 import { UsagePanelContent } from './UsagePanel';
 import { DebugPanelContent, type DebugInfo } from './DebugPanel';
+import { useLanguage } from '../i18n/LanguageContext';
+import type { Lang } from '../i18n/dictionary';
 
 type ModelChoice = 'sonnet' | 'haiku';
 type LengthChoice = 'extenso' | 'corto';
 type ImageResolution = 'alta' | 'media' | 'baja';
 
-type Pestaña = 'estilo' | 'ajustes' | 'debug';
-const PESTAÑAS: Pestaña[] = ['estilo', 'ajustes', 'debug'];
-const ETIQUETA_PESTAÑA: Record<Pestaña, string> = { estilo: 'Estilo', ajustes: 'Ajustes', debug: 'Debug' };
+type Pestaña = 'estilo' | 'ajustes' | 'debug' | 'idioma';
+const PESTAÑAS: Pestaña[] = ['estilo', 'ajustes', 'idioma', 'debug'];
 
 // Botón único (icono de engranaje) que agrupa lo que antes eran tres
 // iconos sueltos sobre la foto (estilo, consumo/ajustes, debug) — se
@@ -45,6 +46,7 @@ export default function SettingsPanel({
   onLengthChange: (length: LengthChoice) => void;
   onResolutionChange: (resolution: ImageResolution) => void;
 }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [pestaña, setPestaña] = useState<Pestaña>('estilo');
 
@@ -53,7 +55,7 @@ export default function SettingsPanel({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Ajustes"
+        aria-label={t.settingsPanel.ajustes}
         className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full border border-paper/35 bg-ink/55 text-paper backdrop-blur-sm"
       >
         <svg viewBox="0 0 24 24" className="h-4.25 w-4.25" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -72,8 +74,8 @@ export default function SettingsPanel({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 pt-5">
-              <h2 className="font-brush text-lg font-semibold">Ajustes</h2>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar" className="text-ink-soft">
+              <h2 className="font-brush text-lg font-semibold">{t.settingsPanel.ajustes}</h2>
+              <button type="button" onClick={() => setOpen(false)} aria-label={t.settingsPanel.cerrar} className="text-ink-soft">
                 ✕
               </button>
             </div>
@@ -88,7 +90,7 @@ export default function SettingsPanel({
                     pestaña === p ? 'bg-ink text-paper' : 'bg-paper-dark text-ink-soft'
                   }`}
                 >
-                  {ETIQUETA_PESTAÑA[p]}
+                  {t.settingsPanel.pestañas[p]}
                 </button>
               ))}
             </div>
@@ -108,11 +110,34 @@ export default function SettingsPanel({
                   onResolutionChange={onResolutionChange}
                 />
               )}
+              {pestaña === 'idioma' && <IdiomaSelectorContent />}
               {pestaña === 'debug' && <DebugPanelContent debug={debug} />}
             </div>
           </div>
         </div>
       )}
     </>
+  );
+}
+
+const IDIOMAS: Lang[] = ['es', 'en', 'zh'];
+
+function IdiomaSelectorContent() {
+  const { lang, setLang, t } = useLanguage();
+  return (
+    <div className="space-y-1">
+      {IDIOMAS.map((valor) => (
+        <button
+          key={valor}
+          type="button"
+          onClick={() => setLang(valor)}
+          className={`block w-full rounded-lg px-3 py-2 text-left text-sm ${
+            lang === valor ? 'bg-ink font-semibold text-paper' : 'text-ink-soft'
+          }`}
+        >
+          {valor === 'es' ? t.idiomaSelector.español : valor === 'en' ? t.idiomaSelector.ingles : t.idiomaSelector.chino}
+        </button>
+      ))}
+    </div>
   );
 }

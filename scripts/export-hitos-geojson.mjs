@@ -20,7 +20,21 @@ const hitos = JSON.parse(await readFile(rutaHitos, 'utf-8'));
 
 const features = hitos.map((h) => ({
   type: 'Feature',
-  properties: { titulo: h.titulo, lugar: h.lugar, descripcion: h.descripcion, year: h.año, y0: h.año - TOLERANCIA_AÑOS, y1: h.año + TOLERANCIA_AÑOS },
+  properties: {
+    titulo: h.titulo,
+    lugar: h.lugar,
+    descripcion: h.descripcion,
+    // Traducciones en batch (ver china-history-api/scripts/translate-hitos.mjs)
+    // — un hito sin traducir cae a los campos en español de arriba (ver
+    // BuscadorHitos.tsx).
+    titulo_en: h.titulo_en,
+    lugar_en: h.lugar_en,
+    titulo_zh: h.titulo_zh,
+    lugar_zh: h.lugar_zh,
+    year: h.año,
+    y0: h.año - TOLERANCIA_AÑOS,
+    y1: h.año + TOLERANCIA_AÑOS,
+  },
   geometry: { type: 'Point', coordinates: [Math.round(h.lng * 1000) / 1000, Math.round(h.lat * 1000) / 1000] },
 }));
 

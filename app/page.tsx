@@ -7,6 +7,8 @@ import SettingsPanel from './components/SettingsPanel';
 import { BuscadorHitosBoton, BuscadorHitosPanel } from './components/BuscadorHitos';
 import { type ImageStyle } from './components/StyleSelector';
 import { type DebugInfo } from './components/DebugPanel';
+import { useLanguage } from './i18n/LanguageContext';
+import type { Lang } from './i18n/dictionary';
 
 // En local usa el backend de tu máquina; en producción, configura
 // NEXT_PUBLIC_API_URL en las variables de entorno de DigitalOcean con la
@@ -21,14 +23,15 @@ const BACKEND_ENABLED = true;
 // Geocodificación inversa de Mapbox (mismo token del mapa, no es nuestro
 // backend) solo para poner un nombre de lugar real en la tarjeta simulada
 // mientras no tenemos CHGIS para resolver el asentamiento histórico.
-async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+async function reverseGeocode(lat: number, lng: number, lang: Lang): Promise<string | null> {
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   if (!token) return null;
   try {
     // "locality" antes que "place": localidades más pequeñas (p. ej. Xiong'an)
     // deben ganar a la ciudad/prefectura grande que las engloba (p. ej. Baoding).
+    const mapboxLang = lang === 'zh' ? 'zh-Hans' : lang;
     const res = await fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?types=locality,place&language=es&access_token=${token}`,
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?types=locality,place&language=${mapboxLang}&access_token=${token}`,
     );
     const data = await res.json();
     const features: { text?: string; context?: { id: string; text?: string }[] }[] = data?.features ?? [];
@@ -70,6 +73,7 @@ type LengthChoice = 'extenso' | 'corto';
 type ImageResolution = 'alta' | 'media' | 'baja';
 
 export default function Home() {
+  const { lang, t } = useLanguage();
   // El slider va de -2000 a 2000: el año 0 lo deja en el centro de la barra.
   const [year, setYear] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
@@ -118,6 +122,7 @@ export default function Home() {
   const lengthRef = useRef(length);
   const styleRef = useRef(style);
   const resolutionRef = useRef(resolution);
+  const langRef = useRef(lang);
   useEffect(() => {
     yearRef.current = year;
     modelRef.current = model;
@@ -125,7 +130,8 @@ export default function Home() {
     lengthRef.current = length;
     styleRef.current = style;
     resolutionRef.current = resolution;
-  }, [year, model, imageModel, length, style, resolution]);
+    langRef.current = lang;
+  }, [year, model, imageModel, length, style, resolution, lang]);
 
   const liveMockResult = useMemo(
     () => (hasPicked ? mockResult(year, pickedPlace) : null),
@@ -153,6 +159,7 @@ export default function Home() {
       length: lengthRef.current,
       style: styleRef.current,
       resolution: resolutionRef.current,
+      lang: langRef.current,
     });
     const es = new EventSource(`${API_URL}/historical-agent/stream?${params}`);
     eventSourceRef.current = es;
@@ -208,9 +215,9 @@ export default function Home() {
       if (terminado) return;
       cerrar();
       setFase('listo');
-      setNotice('No se ha podido conectar con el backend.');
+      setNotice(t.page.errorConexion);
     };
-  }, []);
+  }, [t]);
 
   const handleMapClick = useCallback(async (lat: number, lng: number) => {
     lastClickCoordsRef.current = { lat, lng };
@@ -219,7 +226,7 @@ export default function Home() {
       setNotice(null);
       setHasPicked(false);
       setFase('cargando');
-      const placeName = await reverseGeocode(lat, lng);
+      const placeName = await reverseGeocode(lat, lng, lang);
       setPickedPlace(placeName);
       setHasPicked(true);
       setFase('listo');
@@ -227,7 +234,7 @@ export default function Home() {
       return;
     }
     consultar(lat, lng);
-  }, [consultar]);
+  }, [consultar, lang]);
 
   // Saltar directo a un hito relacionado (ver TextoPanel): mueve año y
   // lugar y relanza la consulta, como si el usuario hubiera pulsado ahí con
@@ -257,7 +264,7 @@ export default function Home() {
       if (lastClickCoordsRef.current) consultar(lastClickCoordsRef.current.lat, lastClickCoordsRef.current.lng);
     }, 600);
     return () => clearTimeout(timer);
-  }, [year, consultar]);
+  }, [year, lang, consultar]);
 
   useEffect(() => () => eventSourceRef.current?.close(), []);
 
@@ -329,7 +336,7 @@ export default function Home() {
                     vista === v && !buscadorAbierto ? 'bg-ink text-paper' : 'text-ink-soft'
                   }`}
                 >
-                  {v === 'mapa' ? 'Mapa' : 'Texto'}
+                  {v === 'mapa' ? t.page.mapa : t.page.texto}
                 </button>
               ))}
             </div>
@@ -342,7 +349,7 @@ export default function Home() {
         {(fase === 'cargando' || notice) && (
           <div className="pointer-events-none absolute inset-x-4 top-14 z-10 flex justify-center">
             <p className="rounded-full border border-line bg-paper/95 px-4 py-2 text-xs text-ink-soft shadow backdrop-blur-sm">
-              {notice ?? 'Cargando...'}
+              {notice ?? t.page.cargando}
             </p>
           </div>
         )}

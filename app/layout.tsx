@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope, Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
+import { LanguageProvider } from "./i18n/LanguageContext";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -33,7 +34,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="es"
       className={`${manrope.variable} ${notoSerifSC.variable} h-full overflow-hidden overscroll-none antialiased`}
     >
-      <body className="h-full flex flex-col overflow-hidden overscroll-none font-sans">{children}</body>
+      <body className="h-full flex flex-col overflow-hidden overscroll-none font-sans">
+        <LanguageProvider>{children}</LanguageProvider>
+      </body>
     </html>
   );
 }

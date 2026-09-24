@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLanguage } from '../i18n/LanguageContext';
+import type { Lang } from '../i18n/dictionary';
 
 type Usage = {
   mapLoads: number;
@@ -28,9 +30,9 @@ type ImageResolution = 'alta' | 'media' | 'baja';
 const APROX_USD_POR_MILLON_TOKENS_OPENAI = 231;
 const APROX_USD_A_EUR = 0.92;
 
-function costeAproxEur(inputTokens: number, outputTokens: number): string {
+function costeAproxEur(inputTokens: number, outputTokens: number, lang: Lang): string {
   const eur = ((inputTokens + outputTokens) / 1_000_000) * APROX_USD_POR_MILLON_TOKENS_OPENAI * APROX_USD_A_EUR;
-  return eur.toLocaleString('es', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 });
+  return eur.toLocaleString(lang, { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 });
 }
 
 // Sin botón ni modal propios — vive dentro de la pestaña "Ajustes" del
@@ -58,6 +60,7 @@ export function UsagePanelContent({
   onLengthChange: (length: LengthChoice) => void;
   onResolutionChange: (resolution: ImageResolution) => void;
 }) {
+  const { lang, t } = useLanguage();
   const [usage, setUsage] = useState<Usage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +73,7 @@ export function UsagePanelContent({
         if (!cancelado) setUsage(data);
       })
       .catch(() => {
-        if (!cancelado) setError('No se ha podido consultar el consumo.');
+        if (!cancelado) setError(t.usagePanel.errorConsumo);
       })
       .finally(() => {
         if (!cancelado) setLoading(false);
@@ -78,87 +81,77 @@ export function UsagePanelContent({
     return () => {
       cancelado = true;
     };
-  }, [apiUrl]);
+  }, [apiUrl, t]);
 
   return (
     <>
       <div className="space-y-3 text-sm">
         <div>
-          <p className="mb-1 font-semibold">Modelo (texto)</p>
+          <p className="mb-1 font-semibold">{t.usagePanel.modeloTexto}</p>
           <div className="flex gap-2">
-            <ToggleButton etiqueta="Sonnet" activo={model === 'sonnet'} onClick={() => onModelChange('sonnet')} />
-            <ToggleButton etiqueta="Haiku" activo={model === 'haiku'} onClick={() => onModelChange('haiku')} />
+            <ToggleButton etiqueta={t.usagePanel.sonnet} activo={model === 'sonnet'} onClick={() => onModelChange('sonnet')} />
+            <ToggleButton etiqueta={t.usagePanel.haiku} activo={model === 'haiku'} onClick={() => onModelChange('haiku')} />
           </div>
         </div>
 
         <div>
-          <p className="mb-1 font-semibold">Modelo (prompt de imagen)</p>
+          <p className="mb-1 font-semibold">{t.usagePanel.modeloPromptImagen}</p>
           <div className="flex gap-2">
-            <ToggleButton etiqueta="Sonnet" activo={imageModel === 'sonnet'} onClick={() => onImageModelChange('sonnet')} />
-            <ToggleButton etiqueta="Haiku" activo={imageModel === 'haiku'} onClick={() => onImageModelChange('haiku')} />
+            <ToggleButton etiqueta={t.usagePanel.sonnet} activo={imageModel === 'sonnet'} onClick={() => onImageModelChange('sonnet')} />
+            <ToggleButton etiqueta={t.usagePanel.haiku} activo={imageModel === 'haiku'} onClick={() => onImageModelChange('haiku')} />
           </div>
         </div>
 
         <div>
-          <p className="mb-1 font-semibold">Longitud del texto</p>
+          <p className="mb-1 font-semibold">{t.usagePanel.longitudTexto}</p>
           <div className="flex gap-2">
-            <ToggleButton etiqueta="Corto" activo={length === 'corto'} onClick={() => onLengthChange('corto')} />
-            <ToggleButton etiqueta="Extenso" activo={length === 'extenso'} onClick={() => onLengthChange('extenso')} />
+            <ToggleButton etiqueta={t.usagePanel.corto} activo={length === 'corto'} onClick={() => onLengthChange('corto')} />
+            <ToggleButton etiqueta={t.usagePanel.extenso} activo={length === 'extenso'} onClick={() => onLengthChange('extenso')} />
           </div>
         </div>
 
         <div>
-          <p className="mb-1 font-semibold">Resolución de imagen</p>
+          <p className="mb-1 font-semibold">{t.usagePanel.resolucionImagen}</p>
           <div className="flex gap-2">
-            <ToggleButton etiqueta="Alta" activo={resolution === 'alta'} onClick={() => onResolutionChange('alta')} />
-            <ToggleButton etiqueta="Media" activo={resolution === 'media'} onClick={() => onResolutionChange('media')} />
-            <ToggleButton etiqueta="Baja" activo={resolution === 'baja'} onClick={() => onResolutionChange('baja')} />
+            <ToggleButton etiqueta={t.usagePanel.alta} activo={resolution === 'alta'} onClick={() => onResolutionChange('alta')} />
+            <ToggleButton etiqueta={t.usagePanel.media} activo={resolution === 'media'} onClick={() => onResolutionChange('media')} />
+            <ToggleButton etiqueta={t.usagePanel.baja} activo={resolution === 'baja'} onClick={() => onResolutionChange('baja')} />
           </div>
         </div>
 
-        <p className="text-xs text-ink-soft">
-          Se aplica al próximo clic en el mapa. El modelo de imagen solo redacta el prompt visual en
-          inglés (no se muestra) — no tiene por qué coincidir con el del texto. La resolución cambia el
-          peso de la imagen (es de sobra con la más baja para móvil), pero no acelera la generación con
-          este modelo — mira el panel de debug para comprobarlo.
-        </p>
+        <p className="text-xs text-ink-soft">{t.usagePanel.notaAplicacion}</p>
       </div>
 
       <hr className="my-4 border-line" />
 
-      {loading && <p className="text-sm text-ink-soft">Cargando consumo...</p>}
+      {loading && <p className="text-sm text-ink-soft">{t.usagePanel.cargandoConsumo}</p>}
       {error && <p className="text-sm text-ink-soft">{error}</p>}
 
       {usage && !loading && (
         <div className="space-y-3 text-sm">
-          <Fila etiqueta="Cargas de mapa (Mapbox)" valor={usage.mapLoads} limite={usage.limites.mapLoads} />
-          <Fila etiqueta="Geocodificación (Mapbox)" valor={usage.geocodeCalls} limite={usage.limites.geocodeCalls} />
-          <Fila etiqueta="Búsquedas (Tavily)" valor={usage.tavilySearches} limite={usage.limites.tavilySearches} />
+          <Fila etiqueta={t.usagePanel.cargasDeMapa} valor={usage.mapLoads} limite={usage.limites.mapLoads} lang={lang} />
+          <Fila etiqueta={t.usagePanel.geocodificacion} valor={usage.geocodeCalls} limite={usage.limites.geocodeCalls} lang={lang} />
+          <Fila etiqueta={t.usagePanel.busquedasTavily} valor={usage.tavilySearches} limite={usage.limites.tavilySearches} lang={lang} />
 
           <div className="rounded-lg border border-line p-3">
-            <p className="font-semibold">Anthropic (Claude)</p>
-            <p className="mt-1 text-ink-soft">{usage.anthropicRequests.toLocaleString('es')} llamadas</p>
-            <p className="text-ink-soft">{usage.anthropicInputTokens.toLocaleString('es')} tokens de entrada</p>
-            <p className="text-ink-soft">{usage.anthropicOutputTokens.toLocaleString('es')} tokens de salida</p>
+            <p className="font-semibold">{t.usagePanel.anthropicTitulo}</p>
+            <p className="mt-1 text-ink-soft">{usage.anthropicRequests.toLocaleString(lang)} {t.usagePanel.llamadas}</p>
+            <p className="text-ink-soft">{usage.anthropicInputTokens.toLocaleString(lang)} {t.usagePanel.tokensEntrada}</p>
+            <p className="text-ink-soft">{usage.anthropicOutputTokens.toLocaleString(lang)} {t.usagePanel.tokensSalida}</p>
           </div>
 
           <div className="rounded-lg border border-line p-3">
-            <p className="font-semibold">OpenAI (imágenes)</p>
-            <p className="mt-1 text-ink-soft">{usage.openaiImages.toLocaleString('es')} imágenes generadas</p>
-            <p className="text-ink-soft">{usage.openaiInputTokens.toLocaleString('es')} tokens de entrada</p>
-            <p className="text-ink-soft">{usage.openaiOutputTokens.toLocaleString('es')} tokens de salida</p>
+            <p className="font-semibold">{t.usagePanel.openaiTitulo}</p>
+            <p className="mt-1 text-ink-soft">{usage.openaiImages.toLocaleString(lang)} {t.usagePanel.imagenesGeneradas}</p>
+            <p className="text-ink-soft">{usage.openaiInputTokens.toLocaleString(lang)} {t.usagePanel.tokensEntrada}</p>
+            <p className="text-ink-soft">{usage.openaiOutputTokens.toLocaleString(lang)} {t.usagePanel.tokensSalida}</p>
             <p className="mt-1 font-semibold text-seal">
-              ≈ {costeAproxEur(usage.openaiInputTokens, usage.openaiOutputTokens)} aprox.
+              {t.usagePanel.costeAprox(costeAproxEur(usage.openaiInputTokens, usage.openaiOutputTokens, lang))}
             </p>
-            <p className="mt-1 text-xs text-ink-soft">
-              Estimación muy aproximada (no hay precio oficial por token publicado) — compara con el gasto
-              real en <span className="whitespace-nowrap">platform.openai.com/usage</span>.
-            </p>
+            <p className="mt-1 text-xs text-ink-soft">{t.usagePanel.notaEstimacion}</p>
           </div>
 
-          <p className="text-xs text-ink-soft">
-            Contador propio desde que existe la app (no la facturación oficial de cada proveedor).
-          </p>
+          <p className="text-xs text-ink-soft">{t.usagePanel.notaContador}</p>
         </div>
       )}
     </>
@@ -179,14 +172,14 @@ function ToggleButton({ etiqueta, activo, onClick }: { etiqueta: string; activo:
   );
 }
 
-function Fila({ etiqueta, valor, limite }: { etiqueta: string; valor: number; limite: number }) {
+function Fila({ etiqueta, valor, limite, lang }: { etiqueta: string; valor: number; limite: number; lang: Lang }) {
   const pct = Math.min(100, (valor / limite) * 100);
   return (
     <div>
       <div className="flex justify-between">
         <span>{etiqueta}</span>
         <span className="text-ink-soft">
-          {valor.toLocaleString('es')} / {limite.toLocaleString('es')}
+          {valor.toLocaleString(lang)} / {limite.toLocaleString(lang)}
         </span>
       </div>
       <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-line">

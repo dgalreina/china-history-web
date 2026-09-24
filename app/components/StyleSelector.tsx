@@ -1,13 +1,10 @@
 'use client';
 
+import { useLanguage } from '../i18n/LanguageContext';
+
 export type ImageStyle = 'fotorrealista' | 'ilustracion' | 'shanshui' | 'epoca';
 
-const OPCIONES: { valor: ImageStyle; etiqueta: string }[] = [
-  { valor: 'fotorrealista', etiqueta: 'Fotorrealista' },
-  { valor: 'ilustracion', etiqueta: 'Ilustración realista' },
-  { valor: 'shanshui', etiqueta: 'Pintura tradicional (shanshui)' },
-  { valor: 'epoca', etiqueta: 'Estilo de su dinastía' },
-];
+const VALORES: ImageStyle[] = ['fotorrealista', 'ilustracion', 'shanshui', 'epoca'];
 
 // Lista de opciones para elegir el estilo visual de la próxima imagen. Sin
 // botón/menú propio — vive dentro de la pestaña "Estilo" del menú único de
@@ -15,18 +12,19 @@ const OPCIONES: { valor: ImageStyle; etiqueta: string }[] = [
 // directo sobre la foto (se cambia a menudo); se consolidó con
 // debug/consumo en un solo botón a petición del usuario.
 export function StyleSelectorContent({ style, onStyleChange }: { style: ImageStyle; onStyleChange: (s: ImageStyle) => void }) {
+  const { t } = useLanguage();
   return (
     <div className="space-y-1">
-      {OPCIONES.map((o) => (
+      {VALORES.map((valor) => (
         <button
-          key={o.valor}
+          key={valor}
           type="button"
-          onClick={() => onStyleChange(o.valor)}
+          onClick={() => onStyleChange(valor)}
           className={`block w-full rounded-lg px-3 py-2 text-left text-sm ${
-            style === o.valor ? 'bg-ink font-semibold text-paper' : 'text-ink-soft'
+            style === valor ? 'bg-ink font-semibold text-paper' : 'text-ink-soft'
           }`}
         >
-          {o.etiqueta}
+          {t.styleSelector[valor]}
         </button>
       ))}
     </div>
