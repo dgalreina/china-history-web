@@ -20,7 +20,7 @@ const hitos = JSON.parse(await readFile(rutaHitos, 'utf-8'));
 
 const features = hitos.map((h) => ({
   type: 'Feature',
-  properties: { titulo: h.titulo, descripcion: h.descripcion, year: h.año, y0: h.año - TOLERANCIA_AÑOS, y1: h.año + TOLERANCIA_AÑOS },
+  properties: { titulo: h.titulo, lugar: h.lugar, descripcion: h.descripcion, year: h.año, y0: h.año - TOLERANCIA_AÑOS, y1: h.año + TOLERANCIA_AÑOS },
   geometry: { type: 'Point', coordinates: [Math.round(h.lng * 1000) / 1000, Math.round(h.lat * 1000) / 1000] },
 }));
 

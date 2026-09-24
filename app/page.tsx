@@ -4,6 +4,7 @@ import MapView from './components/MapView';
 import DynastyTimeline, { segmentAt } from './components/DynastyTimeline';
 import { ImagenPanel, PortadaPanel, TextoPanel, type Fase, type Result } from './components/ResultPanels';
 import SettingsPanel from './components/SettingsPanel';
+import { BuscadorHitosBoton, BuscadorHitosPanel } from './components/BuscadorHitos';
 import { type ImageStyle } from './components/StyleSelector';
 import { type DebugInfo } from './components/DebugPanel';
 
@@ -81,6 +82,7 @@ export default function Home() {
   // una consulta nueva se pasa a "texto" para leerlo según se escribe; el
   // mapa sigue montado debajo, solo queda tapado.
   const [vista, setVista] = useState<'mapa' | 'texto'>('mapa');
+  const [buscadorAbierto, setBuscadorAbierto] = useState(false);
 
   // Preferencia del usuario para el modelo/longitud de la síntesis — se
   // manda al backend en cada consulta. No hace falta persistirla entre
@@ -309,21 +311,26 @@ export default function Home() {
         )}
 
         {hayResultado && (
-          <div className="absolute right-3 top-3 z-10 flex rounded-full border border-line bg-paper/80 p-0.5 shadow-sm backdrop-blur-sm">
-            {(['mapa', 'texto'] as const).map((v) => (
-              <button
-                key={v}
-                type="button"
-                onClick={() => setVista(v)}
-                className={`h-5.5 rounded-full px-2.5 text-[10px] font-bold ${
-                  vista === v ? 'bg-ink text-paper' : 'text-ink-soft'
-                }`}
-              >
-                {v === 'mapa' ? 'Mapa' : 'Texto'}
-              </button>
-            ))}
+          <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">
+            <div className="flex rounded-full border border-line bg-paper/80 p-0.5 shadow-sm backdrop-blur-sm">
+              {(['mapa', 'texto'] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setVista(v)}
+                  className={`h-5.5 rounded-full px-2.5 text-[10px] font-bold ${
+                    vista === v ? 'bg-ink text-paper' : 'text-ink-soft'
+                  }`}
+                >
+                  {v === 'mapa' ? 'Mapa' : 'Texto'}
+                </button>
+              ))}
+            </div>
+            <BuscadorHitosBoton open={buscadorAbierto} onToggle={() => setBuscadorAbierto((v) => !v)} />
           </div>
         )}
+
+        <BuscadorHitosPanel open={buscadorAbierto} onClose={() => setBuscadorAbierto(false)} onSaltarAHito={saltarAHito} />
 
         {(fase === 'cargando' || notice) && (
           <div className="pointer-events-none absolute inset-x-4 top-14 z-10 flex justify-center">
