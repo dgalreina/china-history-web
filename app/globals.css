@@ -102,6 +102,15 @@ body {
   }
 }
 
+/* Oculta el logo y la atribución de Mapbox (decisión explícita del
+   usuario, a sabiendas de que los términos de servicio de Mapbox exigen
+   mostrarlos en el plan gratuito/estándar — solo un acuerdo empresarial
+   permite quitarlos legítimamente). */
+.mapboxgl-ctrl-logo,
+.mapboxgl-ctrl-attrib {
+  display: none !important;
+}
+
 .sin-scrollbar {
   scrollbar-width: none;
 }

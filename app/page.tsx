@@ -310,8 +310,12 @@ export default function Home() {
           </div>
         )}
 
-        {hayResultado && (
-          <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">
+        {/* La lupa vale desde el principio (antes de cualquier clic, para
+            saltar directo a un hito sin tener que encontrarlo a ojo); el
+            conmutador Mapa/Texto solo tiene sentido una vez hay resultado
+            que alternar. */}
+        <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">
+          {hayResultado && (
             <div className="flex rounded-full border border-line bg-paper/80 p-0.5 shadow-sm backdrop-blur-sm">
               {(['mapa', 'texto'] as const).map((v) => (
                 <button
@@ -326,9 +330,9 @@ export default function Home() {
                 </button>
               ))}
             </div>
-            <BuscadorHitosBoton open={buscadorAbierto} onToggle={() => setBuscadorAbierto((v) => !v)} />
-          </div>
-        )}
+          )}
+          <BuscadorHitosBoton open={buscadorAbierto} onToggle={() => setBuscadorAbierto((v) => !v)} />
+        </div>
 
         <BuscadorHitosPanel open={buscadorAbierto} onClose={() => setBuscadorAbierto(false)} onSaltarAHito={saltarAHito} />
 
