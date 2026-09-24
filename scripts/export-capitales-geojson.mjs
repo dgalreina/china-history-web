@@ -35,18 +35,20 @@ function centroide(geometry) {
 // MapView.tsx); "categoria" es el tipo de sitio en sí (palacio/templo,
 // ver china-history-api data/capitales/README.md) — dos cosas distintas
 // que comparten nombre corto por poco, cuidado al tocar esto.
-const features = capitales.flatMap((c) => [
-  {
-    type: 'Feature',
-    properties: { tipo: 'recinto', categoria: c.tipo, nombre: c.nombre, lugar: c.lugar, y0: c.y0, y1: c.y1 },
-    geometry: c.geometry,
-  },
-  {
+//
+// Algunos sitios reales no tienen contorno mapeado en OSM, solo un punto
+// (ver `radioKm` en capitales.json y dentroDeCapital en el backend) — para
+// esos no hay polígono que dibujar, solo el punto en sus coordenadas
+// reales (no un centroide calculado).
+const features = capitales.flatMap((c) => {
+  const punto = {
     type: 'Feature',
     properties: { tipo: 'punto', categoria: c.tipo, nombre: c.nombre, lugar: c.lugar, y0: c.y0, y1: c.y1 },
-    geometry: { type: 'Point', coordinates: centroide(c.geometry) },
-  },
-]);
+    geometry: c.geometry.type === 'Point' ? c.geometry : { type: 'Point', coordinates: centroide(c.geometry) },
+  };
+  if (c.geometry.type === 'Point') return [punto];
+  return [{ type: 'Feature', properties: { tipo: 'recinto', categoria: c.tipo, nombre: c.nombre, lugar: c.lugar, y0: c.y0, y1: c.y1 }, geometry: c.geometry }, punto];
+});
 
 const geojson = { type: 'FeatureCollection', features };
 
