@@ -321,9 +321,12 @@ export default function Home() {
                 <button
                   key={v}
                   type="button"
-                  onClick={() => setVista(v)}
+                  onClick={() => {
+                    setVista(v);
+                    setBuscadorAbierto(false);
+                  }}
                   className={`h-5.5 rounded-full px-2.5 text-[10px] font-bold ${
-                    vista === v ? 'bg-ink text-paper' : 'text-ink-soft'
+                    vista === v && !buscadorAbierto ? 'bg-ink text-paper' : 'text-ink-soft'
                   }`}
                 >
                   {v === 'mapa' ? 'Mapa' : 'Texto'}
@@ -334,7 +337,7 @@ export default function Home() {
           <BuscadorHitosBoton open={buscadorAbierto} onToggle={() => setBuscadorAbierto((v) => !v)} />
         </div>
 
-        <BuscadorHitosPanel open={buscadorAbierto} onClose={() => setBuscadorAbierto(false)} onSaltarAHito={saltarAHito} />
+        <BuscadorHitosPanel open={buscadorAbierto} onClose={() => setBuscadorAbierto(false)} year={year} onSaltarAHito={saltarAHito} />
 
         {(fase === 'cargando' || notice) && (
           <div className="pointer-events-none absolute inset-x-4 top-14 z-10 flex justify-center">

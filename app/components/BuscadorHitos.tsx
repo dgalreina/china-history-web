@@ -4,33 +4,37 @@ import { useEffect, useMemo, useState } from 'react';
 import { formatYear } from './DynastyTimeline';
 
 type HitoFeature = {
-  properties: { titulo: string; lugar: string; year: number };
+  properties: { titulo: string; lugar: string; year: number; y0: number; y1: number };
   geometry: { type: 'Point'; coordinates: [number, number] };
 };
 
-// Botón (lupa) + panel para saltar directo a cualquiera de los ~1000
-// hitos conocidos (los mismos puntos dorados del mapa, ver
-// scripts/export-hitos-geojson.mjs) buscando por texto, sin tener que
-// encontrarlo a ojo — mismo mecanismo que "hitos futuros/cercanos" en
-// TextoPanel (onSaltarAHito). Van separados (no como un único componente
-// con su propio desplegable) porque el botón vive en la fila pequeña
-// junto al conmutador Mapa/Texto, mientras que el panel necesita anclarse
-// a todo el contenedor mapa/texto — si viviera dentro de esa fila (que es
-// `position: absolute`), el panel se recortaría a su tamaño en vez de
-// ocupar la parte de abajo del panel grande.
+// Botón (lupa) + pantalla completa para saltar directo a cualquiera de los
+// ~1000 hitos conocidos (los mismos puntos dorados del mapa, ver
+// scripts/export-hitos-geojson.mjs) buscando por texto o año, sin tener
+// que encontrarlo a ojo — mismo mecanismo que "hitos futuros/cercanos" en
+// TextoPanel (onSaltarAHito). No es un popup: ocupa toda la mitad mapa/
+// texto igual que TextoPanel, para no dar sensación de ventana flotante
+// (y de paso evita líos de recorte en móvil que sí tenía como popup). El
+// botón cambia de lupa a "cerrar" mientras está abierto.
 export function BuscadorHitosBoton({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   return (
     <button
       type="button"
       onClick={onToggle}
-      aria-label="Buscar un hito"
+      aria-label={open ? 'Cerrar búsqueda' : 'Buscar un hito'}
       aria-expanded={open}
       className="flex h-5.5 w-5.5 items-center justify-center rounded-full border border-line bg-paper/80 text-ink-soft shadow-sm backdrop-blur-sm"
     >
-      <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="11" cy="11" r="7" />
-        <path d="m21 21-4.35-4.35" />
-      </svg>
+      {open ? (
+        <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m21 21-4.35-4.35" />
+        </svg>
+      )}
     </button>
   );
 }
@@ -38,10 +42,12 @@ export function BuscadorHitosBoton({ open, onToggle }: { open: boolean; onToggle
 export function BuscadorHitosPanel({
   open,
   onClose,
+  year,
   onSaltarAHito,
 }: {
   open: boolean;
   onClose: () => void;
+  year: number;
   onSaltarAHito: (lat: number, lng: number, año: number) => void;
 }) {
   const [hitos, setHitos] = useState<HitoFeature[] | null>(null);
@@ -61,13 +67,22 @@ export function BuscadorHitosPanel({
       .catch(() => setHitos([]));
   }, [open, hitos]);
 
+  // Sin nada escrito: los hitos del año elegido en el slider (los mismos
+  // que aparecen como punto en el mapa ahí mismo, y0/y1 ya traen la misma
+  // tolerancia de ±25 años). Si se escribe un año, los hitos de ESE año
+  // (mismo criterio y0/y1). Si se escribe texto, busca por nombre/lugar
+  // en TODOS los años — ya no importa el año elegido, se está buscando
+  // algo concreto.
   const filtrados = useMemo(() => {
     if (!hitos) return [];
-    const lista = [...hitos].sort((a, b) => a.properties.year - b.properties.year);
-    const q = busqueda.trim().toLowerCase();
-    if (!q) return lista;
-    return lista.filter((h) => `${h.properties.titulo} ${h.properties.lugar}`.toLowerCase().includes(q));
-  }, [hitos, busqueda]);
+    const q = busqueda.trim();
+    const añoBuscado = q && /^-?\d+$/.test(q) ? Number(q) : q ? null : year;
+    const lista =
+      añoBuscado !== null
+        ? hitos.filter((h) => h.properties.y0 <= añoBuscado && añoBuscado <= h.properties.y1)
+        : hitos.filter((h) => `${h.properties.titulo} ${h.properties.lugar}`.toLowerCase().includes(q.toLowerCase()));
+    return [...lista].sort((a, b) => a.properties.year - b.properties.year);
+  }, [hitos, busqueda, year]);
 
   if (!open) return null;
 
@@ -78,39 +93,28 @@ export function BuscadorHitosPanel({
   };
 
   return (
-    <>
-      <div className="absolute inset-0 z-20 bg-ink/40" onClick={onClose} />
-      <div
-        className="absolute inset-x-0 bottom-0 z-20 flex max-h-[70%] flex-col rounded-t-2xl border-t border-line bg-paper shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-4">
-          <h2 className="font-brush text-base font-semibold text-ink">Buscar hito</h2>
-          <button type="button" onClick={onClose} aria-label="Cerrar" className="text-ink-soft">
-            ✕
-          </button>
-        </div>
+    <div className="absolute inset-0 z-3 bg-paper">
+      <div className="sin-scrollbar h-full overflow-y-auto px-4 pb-32 pt-12 text-sm">
+        <input
+          type="text"
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder="Nombre, lugar o año..."
+          className="mb-3 w-full rounded-full border border-line bg-paper-dark px-3.5 py-1.5 text-ink outline-none placeholder:text-stone"
+        />
 
-        <div className="px-4 pb-2">
-          <input
-            type="text"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Nombre o lugar..."
-            autoFocus
-            className="w-full rounded-full border border-line bg-paper-dark px-3.5 py-1.5 text-sm text-ink outline-none placeholder:text-stone"
-          />
-        </div>
-
-        <div className="sin-scrollbar min-h-0 flex-1 overflow-y-auto px-4 pb-4">
-          {cargando && <p className="py-4 text-center text-sm text-ink-soft">Cargando hitos...</p>}
-          {!cargando && filtrados.length === 0 && <p className="py-4 text-center text-sm text-ink-soft">Sin resultados.</p>}
+        {cargando && <p className="py-4 text-center text-ink-soft">Cargando hitos...</p>}
+        {!cargando && filtrados.length === 0 && <p className="py-4 text-center text-ink-soft">Sin resultados.</p>}
+        {/* Mismo recuadro que "hitos futuros/cercanos" en TextoPanel
+            (FilaHitoRelacionado) — para que se note que son pulsables, no
+            texto suelto. */}
+        <div className="flex flex-col gap-1.5">
           {filtrados.map((h, i) => (
             <button
               key={i}
               type="button"
               onClick={() => elegir(h)}
-              className="block w-full rounded-lg px-2 py-2 text-left text-sm text-ink-soft hover:bg-paper-dark"
+              className="w-full rounded-lg bg-paper-dark px-3 py-2 text-left text-[13px] text-ink-soft transition-colors hover:bg-line/50"
             >
               <span className="font-semibold text-ink">{formatYear(h.properties.year)}</span>
               {' · '}
@@ -119,6 +123,7 @@ export function BuscadorHitosPanel({
           ))}
         </div>
       </div>
-    </>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-linear-to-b from-transparent via-paper/90 to-paper" />
+    </div>
   );
 }
