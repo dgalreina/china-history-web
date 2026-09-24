@@ -194,13 +194,13 @@ export function BuscadorHitosPanel({
               key={`capital-${i}`}
               type="button"
               onClick={() => elegirCapital(c)}
-              className="w-full rounded-lg border border-seal/25 bg-seal/10 px-3 py-2 text-left text-[13px] text-ink-soft transition-colors hover:bg-seal/20"
+              className="w-full rounded-lg border border-red-800/25 bg-red-800/10 px-3 py-2 text-left text-[13px] text-ink-soft transition-colors hover:bg-red-800/20"
             >
               <span className="font-semibold text-ink">
                 {formatYear(c.properties.y0, lang)}–{formatYear(c.properties.y1, lang)}
               </span>
               {' · '}
-              <span className="text-seal">{CATEGORIA_LABEL[c.properties.categoria]}</span>
+              <span className="text-red-800">{CATEGORIA_LABEL[c.properties.categoria]}</span>
               {' · '}
               {c.properties.lugar}: {c.properties.nombre}
             </button>
