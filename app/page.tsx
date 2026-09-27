@@ -15,9 +15,9 @@ import type { Lang } from './i18n/dictionary';
 // URL pública de china-history-api.
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
-// El backend ya hace algo real (Tavily + Claude), así que lo llamamos de
-// verdad. El modo simulado (mockResult más abajo) se queda por si hace
-// falta seguir puliendo el frontend sin gastar peticiones reales.
+// El backend ya hace algo real (Claude), así que lo llamamos de verdad. El
+// modo simulado (mockResult más abajo) se queda por si hace falta seguir
+// puliendo el frontend sin gastar peticiones reales.
 const BACKEND_ENABLED = true;
 
 // Geocodificación inversa de Mapbox (mismo token del mapa, no es nuestro

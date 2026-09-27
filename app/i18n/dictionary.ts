@@ -43,7 +43,6 @@ export type Textos = {
     errorConsumo: string;
     cargasDeMapa: string;
     geocodificacion: string;
-    busquedasTavily: string;
     anthropicTitulo: string;
     llamadas: string;
     tokensEntrada: string;
@@ -186,7 +185,6 @@ const es: Textos = {
     errorConsumo: 'No se ha podido consultar el consumo.',
     cargasDeMapa: 'Cargas de mapa (Mapbox)',
     geocodificacion: 'Geocodificación (Mapbox)',
-    busquedasTavily: 'Búsquedas (Tavily)',
     anthropicTitulo: 'Anthropic (Claude)',
     llamadas: 'llamadas',
     tokensEntrada: 'tokens de entrada',
@@ -271,7 +269,6 @@ const en: Textos = {
     errorConsumo: 'Could not fetch usage data.',
     cargasDeMapa: 'Map loads (Mapbox)',
     geocodificacion: 'Geocoding (Mapbox)',
-    busquedasTavily: 'Searches (Tavily)',
     anthropicTitulo: 'Anthropic (Claude)',
     llamadas: 'calls',
     tokensEntrada: 'input tokens',
@@ -356,7 +353,6 @@ const zh: Textos = {
     errorConsumo: '无法获取用量数据。',
     cargasDeMapa: '地图加载次数（Mapbox）',
     geocodificacion: '地理编码（Mapbox）',
-    busquedasTavily: '搜索次数（Tavily）',
     anthropicTitulo: 'Anthropic（Claude）',
     llamadas: '次调用',
     tokensEntrada: '输入 token',

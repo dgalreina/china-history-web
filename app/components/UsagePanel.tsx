@@ -7,14 +7,13 @@ import type { Lang } from '../i18n/dictionary';
 type Usage = {
   mapLoads: number;
   geocodeCalls: number;
-  tavilySearches: number;
   anthropicInputTokens: number;
   anthropicOutputTokens: number;
   anthropicRequests: number;
   openaiInputTokens: number;
   openaiOutputTokens: number;
   openaiImages: number;
-  limites: { mapLoads: number; geocodeCalls: number; tavilySearches: number };
+  limites: { mapLoads: number; geocodeCalls: number };
 };
 
 type ModelChoice = 'sonnet' | 'haiku';
@@ -131,7 +130,6 @@ export function UsagePanelContent({
         <div className="space-y-3 text-sm">
           <Fila etiqueta={t.usagePanel.cargasDeMapa} valor={usage.mapLoads} limite={usage.limites.mapLoads} lang={lang} />
           <Fila etiqueta={t.usagePanel.geocodificacion} valor={usage.geocodeCalls} limite={usage.limites.geocodeCalls} lang={lang} />
-          <Fila etiqueta={t.usagePanel.busquedasTavily} valor={usage.tavilySearches} limite={usage.limites.tavilySearches} lang={lang} />
 
           <div className="rounded-lg border border-line p-3">
             <p className="font-semibold">{t.usagePanel.anthropicTitulo}</p>
