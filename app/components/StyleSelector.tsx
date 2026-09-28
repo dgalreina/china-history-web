@@ -2,9 +2,9 @@
 
 import { useLanguage } from '../i18n/LanguageContext';
 
-export type ImageStyle = 'fotorrealista' | 'ilustracion' | 'shanshui' | 'epoca';
+export type ImageStyle = 'fotorrealista' | 'shanshui';
 
-const VALORES: ImageStyle[] = ['fotorrealista', 'ilustracion', 'shanshui', 'epoca'];
+const VALORES: ImageStyle[] = ['fotorrealista', 'shanshui'];
 
 // Lista de opciones para elegir el estilo visual de la próxima imagen. Sin
 // botón/menú propio — vive dentro de la pestaña "Estilo" del menú único de

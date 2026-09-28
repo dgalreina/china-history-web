@@ -23,7 +23,6 @@ export default function SettingsPanel({
   style,
   onStyleChange,
   debug,
-  apiUrl,
   model,
   imageModel,
   length,
@@ -36,7 +35,6 @@ export default function SettingsPanel({
   style: ImageStyle;
   onStyleChange: (s: ImageStyle) => void;
   debug: DebugInfo | null;
-  apiUrl: string;
   model: ModelChoice;
   imageModel: ModelChoice;
   length: LengthChoice;
@@ -99,7 +97,6 @@ export default function SettingsPanel({
               {pestaña === 'estilo' && <StyleSelectorContent style={style} onStyleChange={onStyleChange} />}
               {pestaña === 'ajustes' && (
                 <UsagePanelContent
-                  apiUrl={apiUrl}
                   model={model}
                   imageModel={imageModel}
                   length={length}

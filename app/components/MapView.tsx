@@ -8,12 +8,10 @@ mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
 export default function MapView({
   onClick,
-  apiUrl,
   focus,
   year,
 }: {
   onClick: (lat: number, lng: number) => void;
-  apiUrl: string;
   focus: { lat: number; lng: number } | null;
   year: number;
 }) {
@@ -296,11 +294,6 @@ export default function MapView({
       // coordenadas, ya ancladas al punto si correspondía.
       onClickRef.current(lngLat.lat, lngLat.lng);
     });
-    map.on('load', () => {
-      // Aviso propio (no del proveedor) de que el mapa se ha cargado, para
-      // el panel de consumo — ver UsagePanel.tsx.
-      fetch(`${apiUrl}/usage/map-load`, { method: 'POST' }).catch(() => {});
-    });
 
     mapRef.current = map;
 
@@ -308,7 +301,7 @@ export default function MapView({
       map.remove();
       mapRef.current = null;
     };
-  }, [apiUrl]);
+  }, []);
 
   // Actualiza qué nombres históricos se ven cada vez que se mueve el slider
   // de año — sin llamada de red, solo recalcula el filtro sobre los datos

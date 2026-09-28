@@ -39,19 +39,6 @@ export type Textos = {
     media: string;
     baja: string;
     notaAplicacion: string;
-    cargandoConsumo: string;
-    errorConsumo: string;
-    cargasDeMapa: string;
-    geocodificacion: string;
-    anthropicTitulo: string;
-    llamadas: string;
-    tokensEntrada: string;
-    tokensSalida: string;
-    openaiTitulo: string;
-    imagenesGeneradas: string;
-    costeAprox: (coste: string) => string;
-    notaEstimacion: string;
-    notaContador: string;
   };
   buscadorHitos: {
     cerrarBusqueda: string;
@@ -70,9 +57,7 @@ export type Textos = {
   };
   styleSelector: {
     fotorrealista: string;
-    ilustracion: string;
     shanshui: string;
-    epoca: string;
   };
   idiomaSelector: {
     titulo: string;
@@ -181,20 +166,6 @@ const es: Textos = {
     baja: 'Baja',
     notaAplicacion:
       'Se aplica al próximo clic en el mapa. El modelo de imagen solo redacta el prompt visual en inglés (no se muestra) — no tiene por qué coincidir con el del texto. La resolución cambia el peso de la imagen (es de sobra con la más baja para móvil), pero no acelera la generación con este modelo — mira el panel de debug para comprobarlo.',
-    cargandoConsumo: 'Cargando consumo...',
-    errorConsumo: 'No se ha podido consultar el consumo.',
-    cargasDeMapa: 'Cargas de mapa (Mapbox)',
-    geocodificacion: 'Geocodificación (Mapbox)',
-    anthropicTitulo: 'Anthropic (Claude)',
-    llamadas: 'llamadas',
-    tokensEntrada: 'tokens de entrada',
-    tokensSalida: 'tokens de salida',
-    openaiTitulo: 'OpenAI (imágenes)',
-    imagenesGeneradas: 'imágenes generadas',
-    costeAprox: (coste) => `≈ ${coste} aprox.`,
-    notaEstimacion:
-      'Estimación muy aproximada (no hay precio oficial por token publicado) — compara con el gasto real en platform.openai.com/usage.',
-    notaContador: 'Contador propio desde que existe la app (no la facturación oficial de cada proveedor).',
   },
   buscadorHitos: {
     cerrarBusqueda: 'Cerrar búsqueda',
@@ -213,9 +184,7 @@ const es: Textos = {
   },
   styleSelector: {
     fotorrealista: 'Fotorrealista',
-    ilustracion: 'Ilustración realista',
     shanshui: 'Pintura tradicional (shanshui)',
-    epoca: 'Estilo de su dinastía',
   },
   idiomaSelector: {
     titulo: 'Idioma',
@@ -265,20 +234,6 @@ const en: Textos = {
     baja: 'Low',
     notaAplicacion:
       'Applies to the next map click. The image model only writes the visual prompt in English (not shown) — it doesn’t have to match the text model. Resolution changes the image file size (the lowest is plenty for mobile), but doesn’t speed up generation with this model — check the debug panel to confirm.',
-    cargandoConsumo: 'Loading usage...',
-    errorConsumo: 'Could not fetch usage data.',
-    cargasDeMapa: 'Map loads (Mapbox)',
-    geocodificacion: 'Geocoding (Mapbox)',
-    anthropicTitulo: 'Anthropic (Claude)',
-    llamadas: 'calls',
-    tokensEntrada: 'input tokens',
-    tokensSalida: 'output tokens',
-    openaiTitulo: 'OpenAI (images)',
-    imagenesGeneradas: 'images generated',
-    costeAprox: (coste) => `≈ ${coste} approx.`,
-    notaEstimacion:
-      'Very rough estimate (no official per-token price is published) — compare with the actual spend at platform.openai.com/usage.',
-    notaContador: 'Our own counter since the app has existed (not each provider’s official billing).',
   },
   buscadorHitos: {
     cerrarBusqueda: 'Close search',
@@ -297,9 +252,7 @@ const en: Textos = {
   },
   styleSelector: {
     fotorrealista: 'Photorealistic',
-    ilustracion: 'Realistic illustration',
     shanshui: 'Traditional painting (shanshui)',
-    epoca: 'Style of its dynasty',
   },
   idiomaSelector: {
     titulo: 'Language',
@@ -349,19 +302,6 @@ const zh: Textos = {
     baja: '低',
     notaAplicacion:
       '将应用于下一次点击地图。图像模型只负责用英文撰写视觉提示词（不会显示），不必与文字模型一致。分辨率会改变图像文件大小（移动端用最低档已足够），但在当前模型下不会加快生成速度——可在调试面板中查看确认。',
-    cargandoConsumo: '正在加载用量...',
-    errorConsumo: '无法获取用量数据。',
-    cargasDeMapa: '地图加载次数（Mapbox）',
-    geocodificacion: '地理编码（Mapbox）',
-    anthropicTitulo: 'Anthropic（Claude）',
-    llamadas: '次调用',
-    tokensEntrada: '输入 token',
-    tokensSalida: '输出 token',
-    openaiTitulo: 'OpenAI（图像）',
-    imagenesGeneradas: '张图像已生成',
-    costeAprox: (coste) => `≈ ${coste}（估算）`,
-    notaEstimacion: '非常粗略的估算（官方未公布每 token 的价格）——请与 platform.openai.com/usage 上的实际花费对比。',
-    notaContador: '这是应用自身的计数器，并非各服务商的官方账单。',
   },
   buscadorHitos: {
     cerrarBusqueda: '关闭搜索',
@@ -380,9 +320,7 @@ const zh: Textos = {
   },
   styleSelector: {
     fotorrealista: '写实照片风格',
-    ilustracion: '写实插画风格',
     shanshui: '传统山水画风格',
-    epoca: '所属朝代的风格',
   },
   idiomaSelector: {
     titulo: '语言',
