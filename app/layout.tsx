@@ -31,7 +31,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="es"
+      lang="en"
       className={`${manrope.variable} ${notoSerifSC.variable} h-full overflow-hidden overscroll-none antialiased`}
     >
       <body className="h-full flex flex-col overflow-hidden overscroll-none font-sans">

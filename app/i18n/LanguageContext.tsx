@@ -14,15 +14,15 @@ function leerLangGuardado(): Lang {
     const guardado = localStorage.getItem(STORAGE_KEY);
     if (guardado === 'es' || guardado === 'en' || guardado === 'zh') return guardado;
   } catch {
-    // localStorage no disponible (SSR, modo privado, storage bloqueado) — es por defecto.
+    // localStorage no disponible (SSR, modo privado, storage bloqueado) — en por defecto.
   }
-  return 'es';
+  return 'en';
 }
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  // Arranca en 'es' (igual en servidor y cliente, evita mismatch de
+  // Arranca en 'en' (igual en servidor y cliente, evita mismatch de
   // hidratación) y se corrige con lo guardado justo después de montar.
-  const [lang, setLangState] = useState<Lang>('es');
+  const [lang, setLangState] = useState<Lang>('en');
 
   useEffect(() => {
     setLangState(leerLangGuardado());
