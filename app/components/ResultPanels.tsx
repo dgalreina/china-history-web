@@ -5,7 +5,7 @@ import { formatYear, segmentAt } from './DynastyTimeline';
 import VasijaSpinner from './VasijaSpinner';
 import { useLanguage } from '../i18n/LanguageContext';
 
-export type HitoRelacionado = { lugar: string; año: number; titulo: string; lat: number; lng: number };
+export type HitoRelacionado = { id: string; lugar: string; año: number; titulo: string; lat: number; lng: number };
 
 export type Result = {
   lugar: string;
@@ -123,7 +123,7 @@ export function TextoPanel({
 }: {
   result: Result;
   fase: Fase;
-  onSaltarAHito: (lat: number, lng: number, año: number) => void;
+  onSaltarAHito: (lat: number, lng: number, año: number, hitoId?: string) => void;
 }) {
   const { t } = useLanguage();
   const relacionados = result.hitos_relacionados;
@@ -158,7 +158,7 @@ export function TextoPanel({
                 <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-stone">{t.resultPanels.sigueLaHistoria}</p>
                 <div className="flex flex-col gap-1.5">
                   {relacionados.futuros.map((h, i) => (
-                    <FilaHitoRelacionado key={i} hito={h} onClick={() => onSaltarAHito(h.lat, h.lng, h.año)} />
+                    <FilaHitoRelacionado key={i} hito={h} onClick={() => onSaltarAHito(h.lat, h.lng, h.año, h.id)} />
                   ))}
                 </div>
               </div>
@@ -168,7 +168,7 @@ export function TextoPanel({
                 <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-stone">{t.resultPanels.cercaDeAqui}</p>
                 <div className="flex flex-col gap-1.5">
                   {relacionados.cercanos.map((h, i) => (
-                    <FilaHitoRelacionado key={i} hito={h} onClick={() => onSaltarAHito(h.lat, h.lng, h.año)} />
+                    <FilaHitoRelacionado key={i} hito={h} onClick={() => onSaltarAHito(h.lat, h.lng, h.año, h.id)} />
                   ))}
                 </div>
               </div>

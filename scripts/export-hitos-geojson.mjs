@@ -21,6 +21,11 @@ const hitos = JSON.parse(await readFile(rutaHitos, 'utf-8'));
 const features = hitos.map((h) => ({
   type: 'Feature',
   properties: {
+    // Id estable por contenido (ver china-history-api/scripts/extract-hitos.mjs)
+    // — permite pedir exactamente este hito al backend (?hitoId=) al
+    // pulsarlo, sin depender de coordenadas/año que pueden empatar con
+    // otro hito casi en el mismo punto (ver BuscadorHitos.tsx, MapView.tsx).
+    id: h.id,
     titulo: h.titulo,
     lugar: h.lugar,
     descripcion: h.descripcion,

@@ -7,6 +7,10 @@ import type { Lang } from '../i18n/dictionary';
 
 type HitoFeature = {
   properties: {
+    // Id estable por contenido (ver china-history-api/scripts/extract-hitos.mjs)
+    // — se manda al backend (?hitoId=) para pedir exactamente este hito,
+    // sin ambigüedad con otro casi en el mismo punto (ver onSaltarAHito).
+    id: string;
     titulo: string;
     lugar: string;
     year: number;
@@ -82,7 +86,7 @@ export function BuscadorHitosPanel({
   open: boolean;
   onClose: () => void;
   year: number;
-  onSaltarAHito: (lat: number, lng: number, año: number) => void;
+  onSaltarAHito: (lat: number, lng: number, año: number, hitoId?: string) => void;
 }) {
   const { lang, t } = useLanguage();
   const [hitos, setHitos] = useState<HitoFeature[] | null>(null);
@@ -147,7 +151,7 @@ export function BuscadorHitosPanel({
 
   const elegirHito = (h: HitoFeature) => {
     const [lng, lat] = h.geometry.coordinates;
-    onSaltarAHito(lat, lng, h.properties.year);
+    onSaltarAHito(lat, lng, h.properties.year, h.properties.id);
     onClose();
   };
 

@@ -11,7 +11,7 @@ export default function MapView({
   focus,
   year,
 }: {
-  onClick: (lat: number, lng: number) => void;
+  onClick: (lat: number, lng: number, hitoId?: string) => void;
   focus: { lat: number; lng: number } | null;
   year: number;
 }) {
@@ -273,6 +273,11 @@ export default function MapView({
         { layers: ['hitos-circle'] },
       );
       let lngLat = e.lngLat;
+      // Id estable del hito enganchado (ver export-hitos-geojson.mjs) — se
+      // manda al backend para pedir exactamente ese hito, sin pasar por la
+      // búsqueda difusa que puede empatar entre varios hitos casi en el
+      // mismo punto (ver historical-agent.service.ts: ramaHito).
+      let hitoId: string | undefined;
       if (cercanos.length > 0) {
         let masCercano = cercanos[0];
         let distanciaMin = Infinity;
@@ -287,12 +292,13 @@ export default function MapView({
         }
         const [lng, lat] = (masCercano as any).geometry.coordinates as [number, number];
         lngLat = { lng, lat } as mapboxgl.LngLat;
+        hitoId = (masCercano as any).properties?.id;
       }
 
       // El marcador se coloca/mueve solo, vía el efecto que escucha `focus`
       // más arriba — onClick (page.tsx) actualiza `focus` con estas mismas
       // coordenadas, ya ancladas al punto si correspondía.
-      onClickRef.current(lngLat.lat, lngLat.lng);
+      onClickRef.current(lngLat.lat, lngLat.lng, hitoId);
     });
 
     mapRef.current = map;

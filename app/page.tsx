@@ -123,6 +123,13 @@ export default function Home() {
   const lastClickCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
   const [focus, setFocus] = useState<{ lat: number; lng: number } | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+  // Id del hito de la última consultar() que llevaba uno (buscador, hitos
+  // relacionados, punto dorado del mapa) — se manda también en
+  // "regenerar imagen", para que borre la caché con el mismo placeKey
+  // exacto que usó ramaHito (ver resolverPlaceKeyCache en el backend).
+  // consultar() lo pisa (a undefined si no aplica) en cada llamada, así que
+  // mover el slider sin pulsar un hito nuevo lo limpia solo.
+  const hitoIdRef = useRef<string | undefined>(undefined);
 
   // year/model/length en refs para que `consultar` sea estable (no cambie de
   // identidad en cada render) y aun así lea siempre los valores actuales.
@@ -154,13 +161,14 @@ export default function Home() {
   // definitivo, "hito", "imagen" (base64, la más lenta) y "done". El
   // resultado anterior se deja en pantalla (atenuado) hasta que llega el
   // lugar nuevo, para que el layout no salte a mapa completo y vuelva.
-  const consultar = useCallback((lat: number, lng: number) => {
+  const consultar = useCallback((lat: number, lng: number, hitoId?: string) => {
     eventSourceRef.current?.close();
     setNotice(null);
     setFase('cargando');
     setDebug(null);
     lastImagenUrlRef.current = null;
     setImagenEnRevision(null);
+    hitoIdRef.current = hitoId;
 
     const params = new URLSearchParams({
       lat: String(lat),
@@ -173,6 +181,7 @@ export default function Home() {
       resolution: resolutionRef.current,
       lang: langRef.current,
     });
+    if (hitoId) params.set('hitoId', hitoId);
     const es = new EventSource(`${API_URL}/historical-agent/stream?${params}`);
     eventSourceRef.current = es;
     let terminado = false;
@@ -236,7 +245,7 @@ export default function Home() {
     };
   }, [t]);
 
-  const handleMapClick = useCallback(async (lat: number, lng: number) => {
+  const handleMapClick = useCallback(async (lat: number, lng: number, hitoId?: string) => {
     lastClickCoordsRef.current = { lat, lng };
     setFocus({ lat, lng });
     if (!BACKEND_ENABLED) {
@@ -250,7 +259,7 @@ export default function Home() {
       setVista('texto');
       return;
     }
-    consultar(lat, lng);
+    consultar(lat, lng, hitoId);
   }, [consultar, lang]);
 
   // Saltar directo a un hito relacionado (ver TextoPanel): mueve año y
@@ -258,12 +267,12 @@ export default function Home() {
   // el slider ya en ese año. yearRef se actualiza ya mismo (no esperar al
   // efecto que lo sincroniza con `year`) para que consultar() lea el año
   // nuevo desde la primerísima llamada.
-  const saltarAHito = useCallback((lat: number, lng: number, año: number) => {
+  const saltarAHito = useCallback((lat: number, lng: number, año: number, hitoId?: string) => {
     yearRef.current = año;
     setYear(año);
     lastClickCoordsRef.current = { lat, lng };
     setFocus({ lat, lng });
-    consultar(lat, lng);
+    consultar(lat, lng, hitoId);
   }, [consultar]);
 
   // Botón "regenerar imagen" (ver settingsPanel más abajo): borra la caché
@@ -286,13 +295,15 @@ export default function Home() {
       resolution: resolutionRef.current,
       lang: langRef.current,
     });
+    const hitoId = hitoIdRef.current;
+    if (hitoId) params.set('hitoId', hitoId);
     try {
       await fetch(`${API_URL}/historical-agent/imagen-cache?${params}`, { method: 'DELETE' });
     } catch {
       // si falla el borrado seguimos igual — en el peor caso consultar()
       // reutiliza la imagen de caché anterior, no es grave.
     }
-    consultar(lat, lng);
+    consultar(lat, lng, hitoId);
   }, [consultar]);
 
   // Al mover el slider con un punto ya elegido se repite la consulta para el
