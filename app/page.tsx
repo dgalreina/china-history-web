@@ -7,6 +7,7 @@ import SettingsPanel from './components/SettingsPanel';
 import { BuscadorHitosBoton, BuscadorHitosPanel } from './components/BuscadorHitos';
 import { type ImageStyle } from './components/StyleSelector';
 import { type DebugInfo } from './components/DebugPanel';
+import VasijaSpinner from './components/VasijaSpinner';
 import { useLanguage } from './i18n/LanguageContext';
 import type { Lang } from './i18n/dictionary';
 
@@ -82,6 +83,15 @@ export default function Home() {
   // actual (ver DebugPanel.tsx). No se persiste: se pierde al pedir otra.
   const [debug, setDebug] = useState<DebugInfo | null>(null);
 
+  // RevisorOpus (ver criticarImagen en el backend) revisa la imagen fresca
+  // en segundo plano, sin retrasar esta respuesta (debug.criticaImagen.
+  // disparada avisa de que se lanzó) — mientras tanto se muestra un
+  // spinner pequeño, y si al terminar dejó alguna sugerencia, un aviso en
+  // el botón de Ajustes hasta que se abra la pestaña "Sugerencias".
+  const [imagenEnRevision, setImagenEnRevision] = useState<string | null>(null);
+  const [haySugerenciasNuevas, setHaySugerenciasNuevas] = useState(false);
+  const lastImagenUrlRef = useRef<string | null>(null);
+
   // Qué ocupa la mitad inferior una vez hay resultado. Al llegar el lugar de
   // una consulta nueva se pasa a "texto" para leerlo según se escribe; el
   // mapa sigue montado debajo, solo queda tapado.
@@ -149,6 +159,8 @@ export default function Home() {
     setNotice(null);
     setFase('cargando');
     setDebug(null);
+    lastImagenUrlRef.current = null;
+    setImagenEnRevision(null);
 
     const params = new URLSearchParams({
       lat: String(lat),
@@ -196,10 +208,15 @@ export default function Home() {
     });
     es.addEventListener('imagen', (e) => {
       const { url } = leer<{ url: string | null }>(e);
+      lastImagenUrlRef.current = url;
       setResult((r) => (r ? { ...r, imagen_url: url } : r));
     });
     es.addEventListener('debug', (e) => {
-      setDebug(leer<DebugInfo>(e));
+      const debugData = leer<DebugInfo>(e);
+      setDebug(debugData);
+      if (debugData.criticaImagen?.disparada && lastImagenUrlRef.current) {
+        setImagenEnRevision(lastImagenUrlRef.current);
+      }
     });
     es.addEventListener('done', () => {
       cerrar();
@@ -249,6 +266,35 @@ export default function Home() {
     consultar(lat, lng);
   }, [consultar]);
 
+  // Botón "regenerar imagen" (ver settingsPanel más abajo): borra la caché
+  // de imagen de este punto/año exactos en el backend y vuelve a lanzar la
+  // misma consulta — útil para comprobar si aplicar una sugerencia de
+  // RevisorOpus (ver pestaña "Sugerencias") realmente arregla algo, sin
+  // esperar a tocar otro punto del mapa. Solo afecta a la imagen: la
+  // caché del texto no se toca.
+  const regenerarImagen = useCallback(async () => {
+    if (!lastClickCoordsRef.current) return;
+    const { lat, lng } = lastClickCoordsRef.current;
+    const params = new URLSearchParams({
+      lat: String(lat),
+      lng: String(lng),
+      year: String(yearRef.current),
+      model: modelRef.current,
+      imageModel: imageModelRef.current,
+      length: lengthRef.current,
+      style: styleRef.current,
+      resolution: resolutionRef.current,
+      lang: langRef.current,
+    });
+    try {
+      await fetch(`${API_URL}/historical-agent/imagen-cache?${params}`, { method: 'DELETE' });
+    } catch {
+      // si falla el borrado seguimos igual — en el peor caso consultar()
+      // reutiliza la imagen de caché anterior, no es grave.
+    }
+    consultar(lat, lng);
+  }, [consultar]);
+
   // Al mover el slider con un punto ya elegido se repite la consulta para el
   // nuevo año — pero no en cada paso del arrastre (cada consulta son varias
   // búsquedas web y una imagen), sino cuando el año lleva un momento quieto.
@@ -268,24 +314,78 @@ export default function Home() {
 
   useEffect(() => () => eventSourceRef.current?.close(), []);
 
+  // Sondeo mientras RevisorOpus revisa en segundo plano (ver arriba):
+  // cada 4s comprueba si ya hay una crítica para esta imagen concreta. Si
+  // aparece, avisa con el punto en Ajustes; si no aparece tras un tope
+  // razonable, asume que no había nada que decir y solo apaga el spinner
+  // (no distingue "sigue corriendo" de "terminó sin nada", pero la llamada
+  // a Opus tarda bastante menos que el tope en la práctica).
+  useEffect(() => {
+    if (!imagenEnRevision) return;
+    let intentos = 0;
+    const MAX_INTENTOS = 15;
+    const id = setInterval(async () => {
+      intentos++;
+      try {
+        const res = await fetch(`${API_URL}/historical-agent/criticas`);
+        const criticas: { imagenUrl: string }[] = await res.json();
+        if (criticas.some((c) => c.imagenUrl === imagenEnRevision)) {
+          setHaySugerenciasNuevas(true);
+          setImagenEnRevision(null);
+        } else if (intentos >= MAX_INTENTOS) {
+          setImagenEnRevision(null);
+        }
+      } catch {
+        if (intentos >= MAX_INTENTOS) setImagenEnRevision(null);
+      }
+    }, 4000);
+    return () => clearInterval(id);
+  }, [imagenEnRevision]);
+
   const hayResultado = displayResult !== null;
   // Un único botón de ajustes (engranaje) agrupa estilo/consumo/debug —
   // antes eran tres iconos sueltos sobre la foto; se consolidaron porque
   // ninguno se abre a menudo (petición del usuario).
   const settingsPanel = (
-    <SettingsPanel
-      style={style}
-      onStyleChange={setStyle}
-      debug={debug}
-      model={model}
-      imageModel={imageModel}
-      length={length}
-      resolution={resolution}
-      onModelChange={setModel}
-      onImageModelChange={setImageModel}
-      onLengthChange={setLength}
-      onResolutionChange={setResolution}
-    />
+    <div className="flex items-center gap-2">
+      {imagenEnRevision && (
+        <span className="text-paper" title="RevisorOpus está revisando la última imagen…">
+          <VasijaSpinner className="h-5 w-5" />
+        </span>
+      )}
+      {hayResultado && (
+        <button
+          type="button"
+          onClick={regenerarImagen}
+          disabled={fase !== 'listo'}
+          aria-label="Regenerar imagen"
+          title="Borra la imagen en caché y genera una nueva para este punto/año"
+          className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full border border-paper/35 bg-ink/55 text-paper backdrop-blur-sm disabled:opacity-40"
+        >
+          <svg viewBox="0 0 24 24" className="h-4.25 w-4.25" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 12a9 9 0 0 1 15.36-6.36L21 8" />
+            <path d="M21 3v5h-5" />
+            <path d="M21 12a9 9 0 0 1-15.36 6.36L3 16" />
+            <path d="M3 21v-5h5" />
+          </svg>
+        </button>
+      )}
+      <SettingsPanel
+        style={style}
+        onStyleChange={setStyle}
+        debug={debug}
+        model={model}
+        imageModel={imageModel}
+        length={length}
+        resolution={resolution}
+        onModelChange={setModel}
+        onImageModelChange={setImageModel}
+        onLengthChange={setLength}
+        onResolutionChange={setResolution}
+        haySugerenciasNuevas={haySugerenciasNuevas}
+        onAbrirSugerencias={() => setHaySugerenciasNuevas(false)}
+      />
+    </div>
   );
 
   // Dos mitades (arriba/abajo en móvil, izquierda/derecha en pantallas

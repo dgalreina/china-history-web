@@ -53,6 +53,10 @@ export type DebugInfo = {
     conArquitecturaRag?: boolean;
   };
   openaiImagen?: { cache: boolean; ms?: number; modelo?: string; tamaño?: string; estilo?: string; prompt?: string; resultado?: string; error?: string };
+  // Avisa de que RevisorOpus se ha lanzado en segundo plano para esta
+  // imagen (ver criticarImagen en el backend) — page.tsx lo usa para
+  // mostrar un spinner y sondear /historical-agent/criticas.
+  criticaImagen?: { disparada: boolean };
   totalMs?: number;
 };
 
@@ -111,7 +115,10 @@ export function DebugPanelContent({ debug }: { debug: DebugInfo | null }) {
   );
 }
 
-function Bloque({ titulo, cache, ms, nota, children }: { titulo: string; cache?: boolean; ms?: number; nota?: string; children?: React.ReactNode }) {
+// Exportadas para reutilizar el mismo estilo de tarjeta/campo en otras
+// pestañas de herramienta de desarrollador del panel de Ajustes (ver
+// SugerenciasPanel.tsx) en vez de duplicarlo.
+export function Bloque({ titulo, cache, ms, nota, children }: { titulo: string; cache?: boolean; ms?: number; nota?: string; children?: React.ReactNode }) {
   return (
     <div className="mb-4 rounded-lg border border-line p-3">
       <div className="mb-1.5 flex items-center justify-between gap-2">
@@ -130,7 +137,7 @@ function Bloque({ titulo, cache, ms, nota, children }: { titulo: string; cache?:
   );
 }
 
-function Campo({ etiqueta, valor }: { etiqueta: string; valor: React.ReactNode }) {
+export function Campo({ etiqueta, valor }: { etiqueta: string; valor: React.ReactNode }) {
   if (valor === undefined || valor === null || valor === '') return null;
   return (
     <div className="mt-2">

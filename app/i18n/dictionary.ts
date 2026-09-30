@@ -24,7 +24,7 @@ export type Textos = {
   settingsPanel: {
     ajustes: string;
     cerrar: string;
-    pestañas: { estilo: string; ajustes: string; debug: string; idioma: string };
+    pestañas: { estilo: string; ajustes: string; debug: string; idioma: string; hallazgos: string; sugerencias: string };
   };
   usagePanel: {
     modeloTexto: string;
@@ -150,7 +150,7 @@ const es: Textos = {
   settingsPanel: {
     ajustes: 'Ajustes',
     cerrar: 'Cerrar',
-    pestañas: { estilo: 'Estilo', ajustes: 'Ajustes', debug: 'Debug', idioma: 'Idioma' },
+    pestañas: { estilo: 'Estilo', ajustes: 'Ajustes', debug: 'Debug', idioma: 'Idioma', hallazgos: 'Hallazgos', sugerencias: 'Sugerencias' },
   },
   usagePanel: {
     modeloTexto: 'Modelo (texto)',
@@ -218,7 +218,7 @@ const en: Textos = {
   settingsPanel: {
     ajustes: 'Settings',
     cerrar: 'Close',
-    pestañas: { estilo: 'Style', ajustes: 'Usage', debug: 'Debug', idioma: 'Language' },
+    pestañas: { estilo: 'Style', ajustes: 'Usage', debug: 'Debug', idioma: 'Language', hallazgos: 'Findings', sugerencias: 'Suggestions' },
   },
   usagePanel: {
     modeloTexto: 'Model (text)',
@@ -286,7 +286,7 @@ const zh: Textos = {
   settingsPanel: {
     ajustes: '设置',
     cerrar: '关闭',
-    pestañas: { estilo: '风格', ajustes: '用量', debug: '调试', idioma: '语言' },
+    pestañas: { estilo: '风格', ajustes: '用量', debug: '调试', idioma: '语言', hallazgos: '发现', sugerencias: '建议' },
   },
   usagePanel: {
     modeloTexto: '模型（文字）',
