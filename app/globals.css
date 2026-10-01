@@ -34,29 +34,6 @@ body {
   color: var(--color-ink);
 }
 
-/* La imagen generada es panorámica (≈2,8:1) y el panel casi cuadrado: con
-   object-fit: cover ocupa toda la altura y sobra anchura, que se recorre
-   muy despacio de un lado a otro, ida y vuelta, como una cámara que
-   panea. Con una imagen no más ancha que el panel no hay desplazamiento. */
-@keyframes panoramica {
-  from {
-    object-position: 0% 50%;
-  }
-  to {
-    object-position: 100% 50%;
-  }
-}
-.panoramica {
-  object-position: 0% 50%;
-  animation: panoramica 80s ease-in-out infinite alternate;
-}
-@media (prefers-reduced-motion: reduce) {
-  .panoramica {
-    animation: none;
-    object-position: 50% 50%;
-  }
-}
-
 /* Spinner con la silueta de la vasija (ver VasijaSpinner.tsx): el
    dasharray "28 100" deja un segmento visible de ~28% del contorno, que
    recorre el perímetro completo desplazando el offset una vuelta entera. */

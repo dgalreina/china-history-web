@@ -62,13 +62,87 @@ export function ImagenPanel({ result, fase, children }: { result: Result; fase: 
   const esPortada = imagenDeFondo === '/portada.jpg';
   const generandoImagen = fase !== 'listo' && !result.imagen_url;
 
+  // La imagen generada es panorámica (≈2,8:1) y el panel casi cuadrado: con
+  // object-fit: cover ocupa toda la altura y sobra anchura, que antes se
+  // recorría sola vía una animación CSS de object-position (ver
+  // globals.css, ya retirada). Ahora el mismo paneo lento ida-vuelta lo
+  // lleva este rAF, para poder PAUSARLO mientras el dedo arrastra la
+  // imagen — con la animación CSS corriendo, un estilo inline no podía
+  // ganarle (las animaciones CSS tienen prioridad sobre el estilo en
+  // línea), así que no había forma limpia de combinar las dos.
+  const imgRef = useRef<HTMLImageElement>(null);
+  const posRef = useRef(0); // 0-100, % en object-position X
+  const direccionRef = useRef<1 | -1>(1);
+  const arrastreRef = useRef<{ x: number; pos: number } | null>(null);
+  const DURACION_PANORAMICA_MS = 80000; // mismo ritmo que la animación CSS anterior (80s por tramo)
+
+  useEffect(() => {
+    if (esPortada) return;
+    posRef.current = 0;
+    direccionRef.current = 1;
+    arrastreRef.current = null;
+    const sinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (sinMovimiento) {
+      if (imgRef.current) imgRef.current.style.objectPosition = '50% 50%';
+      return;
+    }
+    let ultimoFrame = performance.now();
+    let raf = requestAnimationFrame(function tick(ahora) {
+      const dt = ahora - ultimoFrame;
+      ultimoFrame = ahora;
+      if (!arrastreRef.current) {
+        const avance = (dt / DURACION_PANORAMICA_MS) * 100 * direccionRef.current;
+        let nueva = posRef.current + avance;
+        if (nueva >= 100) {
+          nueva = 100;
+          direccionRef.current = -1;
+        } else if (nueva <= 0) {
+          nueva = 0;
+          direccionRef.current = 1;
+        }
+        posRef.current = nueva;
+        if (imgRef.current) imgRef.current.style.objectPosition = `${nueva}% 50%`;
+      }
+      raf = requestAnimationFrame(tick);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [imagenDeFondo, esPortada]);
+
+  // Arrastre táctil: mueve con el dedo, igual de sensible que el ancho
+  // real de la imagen (arrastrar hasta el borde del panel recorre todo el
+  // rango 0-100%). Al soltar, el paneo automático sigue solo desde donde
+  // quedó, en la misma dirección que llevaba — sin saltos ni reinicios.
+  const manejarTouchStart = (e: React.TouchEvent<HTMLImageElement>) => {
+    if (esPortada) return;
+    arrastreRef.current = { x: e.touches[0].clientX, pos: posRef.current };
+  };
+  const manejarTouchMove = (e: React.TouchEvent<HTMLImageElement>) => {
+    if (!arrastreRef.current || !imgRef.current) return;
+    const dx = e.touches[0].clientX - arrastreRef.current.x;
+    const ancho = imgRef.current.clientWidth || 1;
+    // arrastrar el dedo hacia la izquierda revela lo que queda a la
+    // derecha de la imagen, como al pasar una foto panorámica con el dedo.
+    const delta = (-dx / ancho) * 100;
+    const nueva = Math.min(100, Math.max(0, arrastreRef.current.pos + delta));
+    posRef.current = nueva;
+    imgRef.current.style.objectPosition = `${nueva}% 50%`;
+  };
+  const manejarTouchEnd = () => {
+    arrastreRef.current = null;
+  };
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-ink">
       <img
         key={imagenDeFondo}
+        ref={imgRef}
         src={imagenDeFondo}
         alt={esPortada ? '' : t.resultPanels.reconstruccionAlt(result.lugar, result.año)}
-        className={`h-full w-full object-cover transition-[filter] duration-500 ${esPortada ? 'object-[50%_80%]' : 'panoramica'} ${generandoImagen ? 'blur-[3px] brightness-75' : ''}`}
+        onTouchStart={manejarTouchStart}
+        onTouchMove={manejarTouchMove}
+        onTouchEnd={manejarTouchEnd}
+        onTouchCancel={manejarTouchEnd}
+        className={`h-full w-full object-cover transition-[filter] duration-500 ${esPortada ? 'object-[50%_80%] touch-auto' : 'touch-none'} ${generandoImagen ? 'blur-[3px] brightness-75' : ''}`}
       />
 
       {generandoImagen && (
