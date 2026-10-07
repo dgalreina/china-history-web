@@ -32,7 +32,7 @@ type HitoFeature = {
 // diferencia de los ~1000 hitos) — el nombre/lugar salen igual en los 3
 // idiomas.
 type CapitalFeature = {
-  properties: { tipo: 'recinto' | 'punto'; categoria: 'palacio' | 'templo' | 'mansion'; nombre: string; lugar: string; y0: number; y1: number };
+  properties: { tipo: 'recinto' | 'punto'; categoria: 'palacio' | 'templo' | 'mansion' | 'ciudad_antigua' | 'estado'; nombre: string; lugar: string; y0: number; y1: number };
   geometry: { type: 'Point'; coordinates: [number, number] };
 };
 
@@ -169,6 +169,8 @@ export function BuscadorHitosPanel({
     palacio: t.buscadorHitos.categoriaPalacio,
     templo: t.buscadorHitos.categoriaTemplo,
     mansion: t.buscadorHitos.categoriaMansion,
+    ciudad_antigua: t.buscadorHitos.categoriaCiudadAntigua,
+    estado: t.buscadorHitos.categoriaEstado,
   };
 
   return (

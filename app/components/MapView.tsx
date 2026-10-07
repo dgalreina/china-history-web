@@ -242,7 +242,11 @@ export default function MapView({
         filter: filtroPunto(yearRef.current) as any,
         paint: {
           'circle-radius': 5,
-          'circle-color': '#e0827a',
+          // 'estado' son etiquetas aproximadas de un gran reino (sin
+          // recinto real que las respalde, ver buscarCapital en el
+          // backend) — en blanco, para que no se confundan con los
+          // recintos reales (templo/palacio/mansión/ciudad_antigua).
+          'circle-color': ['match', ['get', 'categoria'], 'estado', '#ffffff', '#e0827a'],
           'circle-stroke-width': 1.5,
           'circle-stroke-color': '#1d1b19',
         },

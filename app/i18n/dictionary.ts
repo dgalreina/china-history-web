@@ -49,6 +49,8 @@ export type Textos = {
     categoriaPalacio: string;
     categoriaTemplo: string;
     categoriaMansion: string;
+    categoriaCiudadAntigua: string;
+    categoriaEstado: string;
   };
   dynastyTimeline: {
     añoAnterior: string;
@@ -176,6 +178,8 @@ const es: Textos = {
     categoriaPalacio: 'Palacio',
     categoriaTemplo: 'Templo',
     categoriaMansion: 'Mansión',
+    categoriaCiudadAntigua: 'Ciudad antigua',
+    categoriaEstado: 'Estado',
   },
   dynastyTimeline: {
     añoAnterior: 'Año anterior',
@@ -244,6 +248,8 @@ const en: Textos = {
     categoriaPalacio: 'Palace',
     categoriaTemplo: 'Temple',
     categoriaMansion: 'Mansion',
+    categoriaCiudadAntigua: 'Ancient city',
+    categoriaEstado: 'State',
   },
   dynastyTimeline: {
     añoAnterior: 'Previous year',
@@ -312,6 +318,8 @@ const zh: Textos = {
     categoriaPalacio: '宫殿',
     categoriaTemplo: '寺庙',
     categoriaMansion: '王府',
+    categoriaCiudadAntigua: '古城',
+    categoriaEstado: '诸侯国',
   },
   dynastyTimeline: {
     añoAnterior: '上一年',
