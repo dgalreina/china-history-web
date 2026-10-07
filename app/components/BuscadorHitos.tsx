@@ -32,7 +32,18 @@ type HitoFeature = {
 // diferencia de los ~1000 hitos) — el nombre/lugar salen igual en los 3
 // idiomas.
 type CapitalFeature = {
-  properties: { tipo: 'recinto' | 'punto'; categoria: 'palacio' | 'templo' | 'mansion' | 'ciudad_antigua' | 'estado'; nombre: string; lugar: string; y0: number; y1: number };
+  properties: { tipo: 'recinto' | 'punto'; categoria: 'palacio' | 'templo' | 'mansion' | 'ciudad_antigua'; nombre: string; lugar: string; y0: number; y1: number };
+  geometry: { type: 'Point'; coordinates: [number, number] };
+};
+
+// Yacimientos sin recinto real (ver china-history-api/data/yacimientos/
+// yacimientos.json) — 'estado' (etiqueta aproximada) y los sitios de la
+// Figura 1 del capítulo 26 del Oxford Handbook (entierro/fundición/
+// residencial, estos sí con contenido real, ver buscarYacimiento en el
+// backend). Mismo patrón que CapitalFeature pero fuente/caja propia (azul,
+// no rojiza) para no confundirlos con recintos reales.
+type YacimientoFeature = {
+  properties: { categoria: 'estado' | 'entierro' | 'fundicion' | 'residencial'; nombre: string; lugar: string; y0: number; y1: number };
   geometry: { type: 'Point'; coordinates: [number, number] };
 };
 
@@ -91,11 +102,12 @@ export function BuscadorHitosPanel({
   const { lang, t } = useLanguage();
   const [hitos, setHitos] = useState<HitoFeature[] | null>(null);
   const [capitales, setCapitales] = useState<CapitalFeature[] | null>(null);
+  const [yacimientos, setYacimientos] = useState<YacimientoFeature[] | null>(null);
   const [busqueda, setBusqueda] = useState('');
-  // Derivado de `hitos`/`capitales` en vez de un estado propio: mientras no
-  // llegan (null) y el panel está abierto, se está cargando — evita el
-  // setState síncrono al inicio del efecto de abajo.
-  const cargando = open && (hitos === null || capitales === null);
+  // Derivado de `hitos`/`capitales`/`yacimientos` en vez de un estado propio:
+  // mientras no llegan (null) y el panel está abierto, se está cargando —
+  // evita el setState síncrono al inicio del efecto de abajo.
+  const cargando = open && (hitos === null || capitales === null || yacimientos === null);
 
   // Se carga la primera vez que se abre, no en cada montaje de la página
   // — son ~1000 hitos, no hace falta pedirlos si nunca se usa el buscador.
@@ -113,7 +125,13 @@ export function BuscadorHitosPanel({
         .then((geojson) => setCapitales(geojson.features.filter((f: CapitalFeature) => f.properties.tipo === 'punto')))
         .catch(() => setCapitales([]));
     }
-  }, [open, hitos, capitales]);
+    if (!yacimientos) {
+      fetch('/data/yacimientos.geojson')
+        .then((res) => res.json())
+        .then((geojson) => setYacimientos(geojson.features))
+        .catch(() => setYacimientos([]));
+    }
+  }, [open, hitos, capitales, yacimientos]);
 
   // Sin nada escrito: los hitos del año elegido en el slider (los mismos
   // que aparecen como punto en el mapa ahí mismo, y0/y1 ya traen la misma
@@ -147,6 +165,17 @@ export function BuscadorHitosPanel({
     return [...lista].sort((a, b) => a.properties.y0 - b.properties.y0);
   }, [capitales, busqueda, year]);
 
+  const yacimientosFiltrados = useMemo(() => {
+    if (!yacimientos) return [];
+    const q = busqueda.trim();
+    const añoBuscado = q && /^-?\d+$/.test(q) ? Number(q) : q ? null : year;
+    const lista =
+      añoBuscado !== null
+        ? yacimientos.filter((y) => y.properties.y0 <= añoBuscado && añoBuscado <= y.properties.y1)
+        : yacimientos.filter((y) => `${y.properties.nombre} ${y.properties.lugar}`.toLowerCase().includes(q.toLowerCase()));
+    return [...lista].sort((a, b) => a.properties.y0 - b.properties.y0);
+  }, [yacimientos, busqueda, year]);
+
   if (!open) return null;
 
   const elegirHito = (h: HitoFeature) => {
@@ -165,12 +194,27 @@ export function BuscadorHitosPanel({
     onClose();
   };
 
+  // Mismo criterio que elegirCapital — los yacimientos tampoco tienen un
+  // año único.
+  const elegirYacimiento = (y: YacimientoFeature) => {
+    const [lng, lat] = y.geometry.coordinates;
+    const añoDestino = Math.min(Math.max(year, y.properties.y0), y.properties.y1);
+    onSaltarAHito(lat, lng, añoDestino);
+    onClose();
+  };
+
   const CATEGORIA_LABEL: Record<CapitalFeature['properties']['categoria'], string> = {
     palacio: t.buscadorHitos.categoriaPalacio,
     templo: t.buscadorHitos.categoriaTemplo,
     mansion: t.buscadorHitos.categoriaMansion,
     ciudad_antigua: t.buscadorHitos.categoriaCiudadAntigua,
+  };
+
+  const YACIMIENTO_CATEGORIA_LABEL: Record<YacimientoFeature['properties']['categoria'], string> = {
     estado: t.buscadorHitos.categoriaEstado,
+    entierro: t.buscadorHitos.categoriaEntierro,
+    fundicion: t.buscadorHitos.categoriaFundicion,
+    residencial: t.buscadorHitos.categoriaResidencial,
   };
 
   return (
@@ -185,15 +229,18 @@ export function BuscadorHitosPanel({
         />
 
         {cargando && <p className="py-4 text-center text-ink-soft">{t.buscadorHitos.cargandoHitos}</p>}
-        {!cargando && hitosFiltrados.length === 0 && capitalesFiltrados.length === 0 && (
+        {!cargando && hitosFiltrados.length === 0 && capitalesFiltrados.length === 0 && yacimientosFiltrados.length === 0 && (
           <p className="py-4 text-center text-ink-soft">{t.buscadorHitos.sinResultados}</p>
         )}
         {/* Recintos (palacio/templo/mansión) primero, en caja rojiza para
             distinguirlos de los hitos — mismo mecanismo de filtro por
             año/texto, pero sin traducción propia (dataset pequeño, siempre
-            en español). Luego los hitos, con el mismo recuadro que
-            "hitos futuros/cercanos" en TextoPanel (FilaHitoRelacionado) —
-            para que se note que son pulsables, no texto suelto. */}
+            en español). Luego los yacimientos (estado/entierro/fundición/
+            residencial), en caja azul — ni son hitos puntuales ni recintos
+            reales con muralla, de ahí el color propio. Luego los hitos, con
+            el mismo recuadro que "hitos futuros/cercanos" en TextoPanel
+            (FilaHitoRelacionado) — para que se note que son pulsables, no
+            texto suelto. */}
         <div className="flex flex-col gap-1.5">
           {capitalesFiltrados.map((c, i) => (
             <button
@@ -209,6 +256,26 @@ export function BuscadorHitosPanel({
               <span className="text-red-800">{CATEGORIA_LABEL[c.properties.categoria]}</span>
               {' · '}
               {c.properties.lugar}: {c.properties.nombre}
+            </button>
+          ))}
+          {yacimientosFiltrados.map((y, i) => (
+            <button
+              key={`yacimiento-${i}`}
+              type="button"
+              onClick={() => elegirYacimiento(y)}
+              className="w-full rounded-lg border border-sky-800/25 bg-sky-800/10 px-3 py-2 text-left text-[13px] text-ink-soft transition-colors hover:bg-sky-800/20"
+            >
+              <span className="font-semibold text-ink">
+                {formatYear(y.properties.y0, lang)}–{formatYear(y.properties.y1, lang)}
+              </span>
+              {' · '}
+              <span className="text-sky-800">{YACIMIENTO_CATEGORIA_LABEL[y.properties.categoria]}</span>
+              {' · '}
+              {/* 'estado' es una etiqueta aproximada, sin lugar moderno real
+                  que mostrar (ver buscarYacimiento, lo excluye del todo) —
+                  solo el nombre. Los demás sí tienen un yacimiento real
+                  localizado, ahí sí tiene sentido mostrar dónde. */}
+              {y.properties.categoria === 'estado' ? y.properties.nombre : `${y.properties.lugar}: ${y.properties.nombre}`}
             </button>
           ))}
           {hitosFiltrados.map((h, i) => {

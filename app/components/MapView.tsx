@@ -242,13 +242,40 @@ export default function MapView({
         filter: filtroPunto(yearRef.current) as any,
         paint: {
           'circle-radius': 5,
-          // 'estado' son etiquetas aproximadas de un gran reino (sin
-          // recinto real que las respalde, ver buscarCapital en el
-          // backend) — en blanco, para que no se confundan con los
-          // recintos reales (templo/palacio/mansión/ciudad_antigua).
-          'circle-color': ['match', ['get', 'categoria'], 'estado', '#ffffff', '#e0827a'],
+          'circle-color': '#e0827a',
           'circle-stroke-width': 1.5,
           'circle-stroke-color': '#1d1b19',
+        },
+      });
+
+      // Yacimientos sin recinto real (ver china-history-api/data/
+      // yacimientos/yacimientos.json): 'estado' (etiqueta aproximada de un
+      // reino, sin contenido real) y los sitios de la Figura 1 del capítulo
+      // 26 del Oxford Handbook (entierro/fundición/residencial, SÍ con
+      // contenido real — ver buscarYacimiento en el backend). Fuente propia,
+      // separada de 'capitales' (esto no son recintos reales con muralla) —
+      // símbolo cartográfico de la propia figura del libro (glifos Unicode,
+      // sin assets de icono): □ estado, ★ entierro, ● fundición, ▲
+      // residencial, con el nombre corto debajo. Blanco para 'estado' (sin
+      // contenido real, para que no se confunda con los demás); azul claro
+      // para los otros tres (si tienen contenido real, pero no son un
+      // recinto real como los de 'capitales', de ahí el color propio, ni
+      // rojizo ni blanco) — mismo estilo de texto que chgis-prefecture-
+      // labels (texto claro, halo oscuro).
+      map.addSource('yacimientos', { type: 'geojson', data: '/data/yacimientos.geojson' });
+      const simboloPorCategoria = ['match', ['get', 'categoria'], 'estado', '□', 'entierro', '★', 'fundicion', '●', 'residencial', '▲', ''];
+      const textoSimboloYNombre = ['format', simboloPorCategoria, { 'font-scale': 1.3 }, '\n', {}, ['get', 'etiqueta'], { 'font-scale': 0.7 }];
+      map.addLayer({
+        id: 'yacimientos-punto',
+        type: 'symbol',
+        source: 'yacimientos',
+        maxzoom: 11,
+        filter: filtroAño(yearRef.current) as any,
+        layout: { 'text-field': textoSimboloYNombre as any, 'text-size': 13, 'text-line-height': 1.1 },
+        paint: {
+          'text-color': ['match', ['get', 'categoria'], 'estado', '#ffffff', '#8ecae6'],
+          'text-halo-color': '#1d1b19',
+          'text-halo-width': 1.2,
         },
       });
     });
@@ -330,6 +357,7 @@ export default function MapView({
     if (map.getLayer('capitales-fill')) map.setFilter('capitales-fill', filtroRecinto as any);
     if (map.getLayer('capitales-outline')) map.setFilter('capitales-outline', filtroRecinto as any);
     if (map.getLayer('capitales-punto')) map.setFilter('capitales-punto', filtroPunto as any);
+    if (map.getLayer('yacimientos-punto')) map.setFilter('yacimientos-punto', filtroAño as any);
   }, [year]);
 
   return <div ref={mapContainer} className="absolute inset-0 h-full w-full" />;

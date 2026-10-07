@@ -10,7 +10,8 @@
     "export:chgis-geojson": "node scripts/export-chgis-geojson.mjs",
     "export:chgis-boundaries": "node scripts/export-chgis-boundaries.mjs",
     "export:hitos-geojson": "node scripts/export-hitos-geojson.mjs",
-    "export:capitales-geojson": "node scripts/export-capitales-geojson.mjs"
+    "export:capitales-geojson": "node scripts/export-capitales-geojson.mjs",
+    "export:yacimientos-geojson": "node scripts/export-yacimientos-geojson.mjs"
   },
   "dependencies": {
     "mapbox-gl": "^3.30.0",

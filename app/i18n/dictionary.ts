@@ -54,6 +54,9 @@ export type Textos = {
     categoriaMansion: string;
     categoriaCiudadAntigua: string;
     categoriaEstado: string;
+    categoriaEntierro: string;
+    categoriaFundicion: string;
+    categoriaResidencial: string;
   };
   dynastyTimeline: {
     añoAnterior: string;
@@ -186,6 +189,9 @@ const es: Textos = {
     categoriaMansion: 'Mansión',
     categoriaCiudadAntigua: 'Ciudad antigua',
     categoriaEstado: 'Estado',
+    categoriaEntierro: 'Entierro',
+    categoriaFundicion: 'Fundición',
+    categoriaResidencial: 'Residencial',
   },
   dynastyTimeline: {
     añoAnterior: 'Año anterior',
@@ -259,6 +265,9 @@ const en: Textos = {
     categoriaMansion: 'Mansion',
     categoriaCiudadAntigua: 'Ancient city',
     categoriaEstado: 'State',
+    categoriaEntierro: 'Burial',
+    categoriaFundicion: 'Foundry',
+    categoriaResidencial: 'Residential',
   },
   dynastyTimeline: {
     añoAnterior: 'Previous year',
@@ -332,6 +341,9 @@ const zh: Textos = {
     categoriaMansion: '王府',
     categoriaCiudadAntigua: '古城',
     categoriaEstado: '诸侯国',
+    categoriaEntierro: '墓葬',
+    categoriaFundicion: '铸造遗址',
+    categoriaResidencial: '居住遗址',
   },
   dynastyTimeline: {
     añoAnterior: '上一年',
