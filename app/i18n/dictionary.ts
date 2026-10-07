@@ -38,6 +38,9 @@ export type Textos = {
     alta: string;
     media: string;
     baja: string;
+    revisorOpus: string;
+    activado: string;
+    desactivado: string;
     notaAplicacion: string;
   };
   buscadorHitos: {
@@ -166,8 +169,11 @@ const es: Textos = {
     alta: 'Alta',
     media: 'Media',
     baja: 'Baja',
+    revisorOpus: 'Revisión automática (RevisorOpus)',
+    activado: 'Activado',
+    desactivado: 'Desactivado',
     notaAplicacion:
-      'Se aplica al próximo clic en el mapa. El modelo de imagen solo redacta el prompt visual en inglés (no se muestra) — no tiene por qué coincidir con el del texto. La resolución cambia el peso de la imagen (es de sobra con la más baja para móvil), pero no acelera la generación con este modelo — mira el panel de debug para comprobarlo.',
+      'Se aplica al próximo clic en el mapa. El modelo de imagen solo redacta el prompt visual en inglés (no se muestra) — no tiene por qué coincidir con el del texto. La resolución cambia el peso de la imagen (es de sobra con la más baja para móvil), pero no acelera la generación con este modelo — mira el panel de debug para comprobarlo. Desactivar la revisión automática no afecta a la imagen en sí, solo evita que se genere una nueva crítica en la pestaña "Sugerencias".',
   },
   buscadorHitos: {
     cerrarBusqueda: 'Cerrar búsqueda',
@@ -236,8 +242,11 @@ const en: Textos = {
     alta: 'High',
     media: 'Medium',
     baja: 'Low',
+    revisorOpus: 'Automatic review (RevisorOpus)',
+    activado: 'On',
+    desactivado: 'Off',
     notaAplicacion:
-      'Applies to the next map click. The image model only writes the visual prompt in English (not shown) — it doesn’t have to match the text model. Resolution changes the image file size (the lowest is plenty for mobile), but doesn’t speed up generation with this model — check the debug panel to confirm.',
+      'Applies to the next map click. The image model only writes the visual prompt in English (not shown) — it doesn’t have to match the text model. Resolution changes the image file size (the lowest is plenty for mobile), but doesn’t speed up generation with this model — check the debug panel to confirm. Turning off automatic review doesn’t affect the image itself, it just skips generating a new critique in the "Suggestions" tab.',
   },
   buscadorHitos: {
     cerrarBusqueda: 'Close search',
@@ -306,8 +315,11 @@ const zh: Textos = {
     alta: '高',
     media: '中',
     baja: '低',
+    revisorOpus: '自动审查（RevisorOpus）',
+    activado: '开启',
+    desactivado: '关闭',
     notaAplicacion:
-      '将应用于下一次点击地图。图像模型只负责用英文撰写视觉提示词（不会显示），不必与文字模型一致。分辨率会改变图像文件大小（移动端用最低档已足够），但在当前模型下不会加快生成速度——可在调试面板中查看确认。',
+      '将应用于下一次点击地图。图像模型只负责用英文撰写视觉提示词（不会显示），不必与文字模型一致。分辨率会改变图像文件大小（移动端用最低档已足够），但在当前模型下不会加快生成速度——可在调试面板中查看确认。关闭自动审查不影响图像本身，只是不会在"建议"标签页中生成新的点评。',
   },
   buscadorHitos: {
     cerrarBusqueda: '关闭搜索',

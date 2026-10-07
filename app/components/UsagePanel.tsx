@@ -18,6 +18,8 @@ export function UsagePanelContent({
   onImageModelChange,
   onLengthChange,
   onResolutionChange,
+  revisorOpusActivo,
+  onRevisorOpusActivoChange,
 }: {
   model: ModelChoice;
   imageModel: ModelChoice;
@@ -27,6 +29,8 @@ export function UsagePanelContent({
   onImageModelChange: (model: ModelChoice) => void;
   onLengthChange: (length: LengthChoice) => void;
   onResolutionChange: (resolution: ImageResolution) => void;
+  revisorOpusActivo: boolean;
+  onRevisorOpusActivoChange: (activo: boolean) => void;
 }) {
   const { t } = useLanguage();
 
@@ -62,6 +66,14 @@ export function UsagePanelContent({
           <ToggleButton etiqueta={t.usagePanel.alta} activo={resolution === 'alta'} onClick={() => onResolutionChange('alta')} />
           <ToggleButton etiqueta={t.usagePanel.media} activo={resolution === 'media'} onClick={() => onResolutionChange('media')} />
           <ToggleButton etiqueta={t.usagePanel.baja} activo={resolution === 'baja'} onClick={() => onResolutionChange('baja')} />
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-1 font-semibold">{t.usagePanel.revisorOpus}</p>
+        <div className="flex gap-2">
+          <ToggleButton etiqueta={t.usagePanel.activado} activo={revisorOpusActivo} onClick={() => onRevisorOpusActivoChange(true)} />
+          <ToggleButton etiqueta={t.usagePanel.desactivado} activo={!revisorOpusActivo} onClick={() => onRevisorOpusActivoChange(false)} />
         </div>
       </div>
 

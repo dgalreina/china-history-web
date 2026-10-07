@@ -33,6 +33,8 @@ export default function SettingsPanel({
   onImageModelChange,
   onLengthChange,
   onResolutionChange,
+  revisorOpusActivo,
+  onRevisorOpusActivoChange,
   haySugerenciasNuevas,
   onAbrirSugerencias,
 }: {
@@ -47,6 +49,8 @@ export default function SettingsPanel({
   onImageModelChange: (model: ModelChoice) => void;
   onLengthChange: (length: LengthChoice) => void;
   onResolutionChange: (resolution: ImageResolution) => void;
+  revisorOpusActivo: boolean;
+  onRevisorOpusActivoChange: (activo: boolean) => void;
   // Punto rojo sobre el icono cuando RevisorOpus ha dejado sugerencias
   // nuevas sin revisar — se limpia al abrir la pestaña "Sugerencias" (ver
   // más abajo), no solo al abrir el panel entero.
@@ -120,6 +124,8 @@ export default function SettingsPanel({
                   onImageModelChange={onImageModelChange}
                   onLengthChange={onLengthChange}
                   onResolutionChange={onResolutionChange}
+                  revisorOpusActivo={revisorOpusActivo}
+                  onRevisorOpusActivoChange={onRevisorOpusActivoChange}
                 />
               )}
               {pestaña === 'idioma' && <IdiomaSelectorContent />}

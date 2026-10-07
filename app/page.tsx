@@ -106,6 +106,10 @@ export default function Home() {
   const [length, setLength] = useState<LengthChoice>('corto');
   const [style, setStyle] = useState<ImageStyle>('fotorrealista');
   const [resolution, setResolution] = useState<ImageResolution>('alta');
+  // Switch de Ajustes para apagar RevisorOpus (Opus revisando cada imagen
+  // generada) — cada crítica cuesta una llamada al modelo más caro del
+  // pipeline, útil poder desactivarlo al generar muchas imágenes seguidas.
+  const [revisorOpusActivo, setRevisorOpusActivo] = useState(true);
 
   // Para la tarjeta simulada guardamos solo el lugar del último clic: el
   // año/dinastía se recalculan en cada render a partir de `year`, así la
@@ -140,6 +144,7 @@ export default function Home() {
   const styleRef = useRef(style);
   const resolutionRef = useRef(resolution);
   const langRef = useRef(lang);
+  const revisorOpusActivoRef = useRef(revisorOpusActivo);
   useEffect(() => {
     yearRef.current = year;
     modelRef.current = model;
@@ -148,7 +153,8 @@ export default function Home() {
     styleRef.current = style;
     resolutionRef.current = resolution;
     langRef.current = lang;
-  }, [year, model, imageModel, length, style, resolution, lang]);
+    revisorOpusActivoRef.current = revisorOpusActivo;
+  }, [year, model, imageModel, length, style, resolution, lang, revisorOpusActivo]);
 
   const liveMockResult = useMemo(
     () => (hasPicked ? mockResult(year, pickedPlace) : null),
@@ -180,6 +186,7 @@ export default function Home() {
       style: styleRef.current,
       resolution: resolutionRef.current,
       lang: langRef.current,
+      revisorOpus: String(revisorOpusActivoRef.current),
     });
     if (hitoId) params.set('hitoId', hitoId);
     const es = new EventSource(`${API_URL}/historical-agent/stream?${params}`);
@@ -393,6 +400,8 @@ export default function Home() {
         onImageModelChange={setImageModel}
         onLengthChange={setLength}
         onResolutionChange={setResolution}
+        revisorOpusActivo={revisorOpusActivo}
+        onRevisorOpusActivoChange={setRevisorOpusActivo}
         haySugerenciasNuevas={haySugerenciasNuevas}
         onAbrirSugerencias={() => setHaySugerenciasNuevas(false)}
       />
