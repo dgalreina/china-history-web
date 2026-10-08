@@ -232,67 +232,81 @@ export function BuscadorHitosPanel({
         {!cargando && hitosFiltrados.length === 0 && capitalesFiltrados.length === 0 && yacimientosFiltrados.length === 0 && (
           <p className="py-4 text-center text-ink-soft">{t.buscadorHitos.sinResultados}</p>
         )}
-        {/* Recintos (palacio/templo/mansión) primero, en caja rojiza para
-            distinguirlos de los hitos — mismo mecanismo de filtro por
-            año/texto, pero sin traducción propia (dataset pequeño, siempre
-            en español). Luego los yacimientos (estado/entierro/fundición/
-            residencial), en caja azul — ni son hitos puntuales ni recintos
-            reales con muralla, de ahí el color propio. Luego los hitos, con
-            el mismo recuadro que "hitos futuros/cercanos" en TextoPanel
-            (FilaHitoRelacionado) — para que se note que son pulsables, no
-            texto suelto. */}
-        <div className="flex flex-col gap-1.5">
-          {capitalesFiltrados.map((c, i) => (
-            <button
-              key={`capital-${i}`}
-              type="button"
-              onClick={() => elegirCapital(c)}
-              className="w-full rounded-lg border border-red-800/25 bg-red-800/10 px-3 py-2 text-left text-[13px] text-ink-soft transition-colors hover:bg-red-800/20"
-            >
-              <span className="font-semibold text-ink">
-                {formatYear(c.properties.y0, lang)}–{formatYear(c.properties.y1, lang)}
-              </span>
-              {' · '}
-              <span className="text-red-800">{CATEGORIA_LABEL[c.properties.categoria]}</span>
-              {' · '}
-              {c.properties.lugar}: {c.properties.nombre}
-            </button>
-          ))}
-          {yacimientosFiltrados.map((y, i) => (
-            <button
-              key={`yacimiento-${i}`}
-              type="button"
-              onClick={() => elegirYacimiento(y)}
-              className="w-full rounded-lg border border-sky-800/25 bg-sky-800/10 px-3 py-2 text-left text-[13px] text-ink-soft transition-colors hover:bg-sky-800/20"
-            >
-              <span className="font-semibold text-ink">
-                {formatYear(y.properties.y0, lang)}–{formatYear(y.properties.y1, lang)}
-              </span>
-              {' · '}
-              <span className="text-sky-800">{YACIMIENTO_CATEGORIA_LABEL[y.properties.categoria]}</span>
-              {' · '}
-              {/* 'estado' es una etiqueta aproximada, sin lugar moderno real
-                  que mostrar (ver buscarYacimiento, lo excluye del todo) —
-                  solo el nombre. Los demás sí tienen un yacimiento real
-                  localizado, ahí sí tiene sentido mostrar dónde. */}
-              {y.properties.categoria === 'estado' ? y.properties.nombre : `${y.properties.lugar}: ${y.properties.nombre}`}
-            </button>
-          ))}
-          {hitosFiltrados.map((h, i) => {
-            const { titulo, lugar } = tituloLugar(h.properties, lang);
-            return (
-              <button
-                key={`hito-${i}`}
-                type="button"
-                onClick={() => elegirHito(h)}
-                className="w-full rounded-lg bg-paper-dark px-3 py-2 text-left text-[13px] text-ink-soft transition-colors hover:bg-line/50"
-              >
-                <span className="font-semibold text-ink">{formatYear(h.properties.year, lang)}</span>
-                {' · '}
-                {lugar}: {titulo}
-              </button>
-            );
-          })}
+        {/* Tres secciones con su propio título, en este orden: 1. hitos
+            históricos (el grueso del contenido, van primero), 2. ciudades/
+            capitales reales (palacio/templo/mansión/ciudad_antigua, caja
+            rojiza), 3. estado/entierro/fundición/residencial (yacimientos
+            sin recinto real, caja azul) — cada sección solo se muestra si
+            tiene resultados, para no dejar un título suelto sin nada
+            debajo. */}
+        <div className="flex flex-col gap-4">
+          {hitosFiltrados.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">{t.buscadorHitos.seccionHitos}</h3>
+              {hitosFiltrados.map((h, i) => {
+                const { titulo, lugar } = tituloLugar(h.properties, lang);
+                return (
+                  <button
+                    key={`hito-${i}`}
+                    type="button"
+                    onClick={() => elegirHito(h)}
+                    className="w-full rounded-lg bg-paper-dark px-3 py-2 text-left text-[13px] text-ink-soft transition-colors hover:bg-line/50"
+                  >
+                    <span className="font-semibold text-ink">{formatYear(h.properties.year, lang)}</span>
+                    {' · '}
+                    {lugar}: {titulo}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {capitalesFiltrados.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">{t.buscadorHitos.seccionCapitales}</h3>
+              {capitalesFiltrados.map((c, i) => (
+                <button
+                  key={`capital-${i}`}
+                  type="button"
+                  onClick={() => elegirCapital(c)}
+                  className="w-full rounded-lg border border-red-800/25 bg-red-800/10 px-3 py-2 text-left text-[13px] text-ink-soft transition-colors hover:bg-red-800/20"
+                >
+                  <span className="font-semibold text-ink">
+                    {formatYear(c.properties.y0, lang)}–{formatYear(c.properties.y1, lang)}
+                  </span>
+                  {' · '}
+                  <span className="text-red-800">{CATEGORIA_LABEL[c.properties.categoria]}</span>
+                  {' · '}
+                  {c.properties.lugar}: {c.properties.nombre}
+                </button>
+              ))}
+            </div>
+          )}
+          {yacimientosFiltrados.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">{t.buscadorHitos.seccionYacimientos}</h3>
+              {yacimientosFiltrados.map((y, i) => (
+                <button
+                  key={`yacimiento-${i}`}
+                  type="button"
+                  onClick={() => elegirYacimiento(y)}
+                  className="w-full rounded-lg border border-sky-800/25 bg-sky-800/10 px-3 py-2 text-left text-[13px] text-ink-soft transition-colors hover:bg-sky-800/20"
+                >
+                  <span className="font-semibold text-ink">
+                    {formatYear(y.properties.y0, lang)}–{formatYear(y.properties.y1, lang)}
+                  </span>
+                  {' · '}
+                  <span className="text-sky-800">{YACIMIENTO_CATEGORIA_LABEL[y.properties.categoria]}</span>
+                  {' · '}
+                  {/* 'estado' es una etiqueta aproximada, sin lugar moderno
+                      real que mostrar (ver buscarYacimiento, lo excluye del
+                      todo) — solo el nombre. Los demás sí tienen un
+                      yacimiento real localizado, ahí sí tiene sentido
+                      mostrar dónde. */}
+                  {y.properties.categoria === 'estado' ? y.properties.nombre : `${y.properties.lugar}: ${y.properties.nombre}`}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-linear-to-b from-transparent via-paper/90 to-paper" />

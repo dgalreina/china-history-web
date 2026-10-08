@@ -57,6 +57,9 @@ export type Textos = {
     categoriaEntierro: string;
     categoriaFundicion: string;
     categoriaResidencial: string;
+    seccionHitos: string;
+    seccionCapitales: string;
+    seccionYacimientos: string;
   };
   dynastyTimeline: {
     añoAnterior: string;
@@ -192,6 +195,9 @@ const es: Textos = {
     categoriaEntierro: 'Entierro',
     categoriaFundicion: 'Fundición',
     categoriaResidencial: 'Residencial',
+    seccionHitos: 'Hitos históricos',
+    seccionCapitales: 'Ciudades y capitales',
+    seccionYacimientos: 'Estados y yacimientos',
   },
   dynastyTimeline: {
     añoAnterior: 'Año anterior',
@@ -268,6 +274,9 @@ const en: Textos = {
     categoriaEntierro: 'Burial',
     categoriaFundicion: 'Foundry',
     categoriaResidencial: 'Residential',
+    seccionHitos: 'Historical landmarks',
+    seccionCapitales: 'Cities and capitals',
+    seccionYacimientos: 'States and archaeological sites',
   },
   dynastyTimeline: {
     añoAnterior: 'Previous year',
@@ -344,6 +353,9 @@ const zh: Textos = {
     categoriaEntierro: '墓葬',
     categoriaFundicion: '铸造遗址',
     categoriaResidencial: '居住遗址',
+    seccionHitos: '历史事件',
+    seccionCapitales: '城市与都城',
+    seccionYacimientos: '诸侯国与遗址',
   },
   dynastyTimeline: {
     añoAnterior: '上一年',
