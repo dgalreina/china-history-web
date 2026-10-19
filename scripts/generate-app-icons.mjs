@@ -54,20 +54,17 @@ const PATINA = [
 // contorno (hueco), igual que VasijaSpinner.tsx — nunca relleno sólido —
 // por eso el stroke-width se define en el espacio del path (16, como el
 // spinner) y escala junto con él dentro del mismo transform.
-// Centro del vientre del ding en el espacio 512×512 de CONTORNO, y altura
-// objetivo del glifo ahí dentro (más grande que el primer intento a mano).
-const GLIFO_CENTRO_DING_X = 256;
-const GLIFO_CENTRO_DING_Y = 245;
-const GLIFO_ALTURA_OBJETIVO = 230;
-const glifoEscala = GLIFO_ALTURA_OBJETIVO / GLIFO_ALTURA;
-const glifoDespl = {
-  x: GLIFO_CENTRO_DING_X - GLIFO_CENTRO_X * glifoEscala,
-  y: GLIFO_CENTRO_DING_Y - GLIFO_CENTRO_Y * glifoEscala,
-};
 
 function svgIcono({ escala, despl, deslX, deslY, ancho = 1024, alto = 1024 }) {
   const dx = deslX ?? despl;
   const dy = deslY ?? despl;
+  // El glifo ya no va pequeño y legible dentro del ding (quedaba como "un
+  // chorrito") — se usa como MÁSCARA gigante de fondo: una zona grande y
+  // difuminada del propio degradado, simplemente más luminosa donde pasa
+  // el carácter, detrás del ding. Centrado en el lienzo entero, ocupando
+  // casi toda su altura.
+  const glowEscala = (Math.min(ancho, alto) * 0.92) / GLIFO_ALTURA;
+  const glowDespl = { x: ancho / 2 - GLIFO_CENTRO_X * glowEscala, y: alto / 2 - GLIFO_CENTRO_Y * glowEscala };
   const paradas = PATINA.map(([pos, color]) => `<stop offset="${pos}%" stop-color="${color}" />`).join('\n      ');
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${ancho}" height="${alto}" viewBox="0 0 ${ancho} ${alto}">
   <defs>
@@ -89,14 +86,6 @@ function svgIcono({ escala, despl, deslX, deslY, ancho = 1024, alto = 1024 }) {
       <stop offset="30%" stop-color="#f5f5f5" />
       <stop offset="100%" stop-color="#6b6b6b" />
     </linearGradient>
-    <!-- El glifo es pequeño y va casi todo en la mitad inferior-derecha del
-         ding (la zona ya oscurecida por blancoGris) — con el mismo
-         degradado fuerte queda casi gris entero. Degradado propio, mucho
-         más suave, para que el carácter siga leyéndose casi blanco. -->
-    <linearGradient id="blancoGrisSuave" x1="10%" y1="0%" x2="90%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff" />
-      <stop offset="100%" stop-color="#e6e6e6" />
-    </linearGradient>
     <!-- Bisel real (no simulado): difumina la máscara de alfa del propio
          trazo/relleno y le aplica una luz direccional (misma esquina que
          el resplandor cálido del fondo, arriba-izda), componiendo el
@@ -109,15 +98,24 @@ function svgIcono({ escala, despl, deslX, deslY, ancho = 1024, alto = 1024 }) {
       <feComposite in="luz" in2="SourceAlpha" operator="in" result="luzRecortada" />
       <feComposite in="SourceGraphic" in2="luzRecortada" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" />
     </filter>
+    <!-- Difuminado amplio para que el glifo-máscara lea como una zona más
+         luminosa del propio degradado, no como una silueta recortada. -->
+    <filter id="desenfoqueGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="${Math.min(ancho, alto) * 0.022}" />
+    </filter>
+    <mask id="maskaraGlifo">
+      <rect width="${ancho}" height="${alto}" fill="black" />
+      <g transform="translate(${glowDespl.x}, ${glowDespl.y}) scale(${glowEscala})">
+        <path d="${GLIFO}" fill="white" fill-rule="evenodd" />
+      </g>
+    </mask>
   </defs>
   <rect width="${ancho}" height="${alto}" fill="url(#fondo)" />
   <rect width="${ancho}" height="${alto}" fill="url(#brilloCalido)" />
   <rect width="${ancho}" height="${alto}" fill="url(#rinconOscuro)" />
+  <rect width="${ancho}" height="${alto}" fill="#ffffff" opacity="0.22" mask="url(#maskaraGlifo)" filter="url(#desenfoqueGlow)" />
   <g transform="translate(${dx}, ${dy}) scale(${escala})" filter="url(#bisel)">
     <path d="${CONTORNO}" fill="none" stroke="url(#blancoGris)" stroke-width="16" stroke-linejoin="round" stroke-linecap="round" />
-    <g transform="translate(${glifoDespl.x}, ${glifoDespl.y}) scale(${glifoEscala})">
-      <path d="${GLIFO}" fill="url(#blancoGrisSuave)" fill-rule="evenodd" />
-    </g>
   </g>
 </svg>`;
 }
