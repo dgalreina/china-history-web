@@ -22,6 +22,13 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "China History",
   },
+  // app/opengraph-image.png (generado por scripts/generate-app-icons.mjs)
+  // se detecta solo por convención de Next.js — esto solo pone el
+  // título/descripción que WhatsApp y similares muestran junto a esa imagen.
+  openGraph: {
+    title: "China History",
+    description: "Explora cómo era un lugar de China en cualquier época.",
+  },
 };
 
 export const viewport: Viewport = {
