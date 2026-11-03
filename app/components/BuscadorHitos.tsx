@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { formatYear } from './DynastyTimeline';
 import { useLanguage } from '../i18n/LanguageContext';
 import type { Lang } from '../i18n/dictionary';
+import { withBase } from '../lib/assets';
 
 type HitoFeature = {
   properties: {
@@ -114,19 +115,19 @@ export function BuscadorHitosPanel({
   useEffect(() => {
     if (!open) return;
     if (!hitos) {
-      fetch('/data/hitos.geojson')
+      fetch(withBase('/data/hitos.geojson'))
         .then((res) => res.json())
         .then((geojson) => setHitos(geojson.features))
         .catch(() => setHitos([]));
     }
     if (!capitales) {
-      fetch('/data/capitales.geojson')
+      fetch(withBase('/data/capitales.geojson'))
         .then((res) => res.json())
         .then((geojson) => setCapitales(geojson.features.filter((f: CapitalFeature) => f.properties.tipo === 'punto')))
         .catch(() => setCapitales([]));
     }
     if (!yacimientos) {
-      fetch('/data/yacimientos.geojson')
+      fetch(withBase('/data/yacimientos.geojson'))
         .then((res) => res.json())
         .then((geojson) => setYacimientos(geojson.features))
         .catch(() => setYacimientos([]));

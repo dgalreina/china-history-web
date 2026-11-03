@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { formatYear, segmentAt } from './DynastyTimeline';
 import VasijaSpinner from './VasijaSpinner';
 import { useLanguage } from '../i18n/LanguageContext';
+import { withBase } from '../lib/assets';
 
 export type HitoRelacionado = { id: string; lugar: string; año: number; titulo: string; lat: number; lng: number };
 
@@ -31,7 +32,7 @@ export function PortadaPanel({ children }: { children?: React.ReactNode }) {
       {/* La imagen es vertical (2:3) y el panel casi cuadrado: con el recorte
           centrado se cortan los pies de la vasija; al 80 % sale entera con
           algo de suelo debajo y las asas aún dentro. */}
-      <img src="/portada.jpg" alt="" className="h-full w-full object-cover object-[50%_80%]" />
+      <img src={withBase('/portada.jpg')} alt="" className="h-full w-full object-cover object-[50%_80%]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-linear-to-b from-ink/70 to-transparent md:h-56" />
       <div className="pointer-events-none absolute inset-x-16 top-5 flex flex-col items-center gap-1 text-center text-paper drop-shadow-md md:top-36">
         <h1 className="font-brush text-2xl font-bold leading-tight md:text-5xl">China History</h1>

@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { CHINA_BOUNDS, CHINA_MASK_GEOJSON, isInsideChina } from '../lib/chinaBoundary';
+import { withBase } from '../lib/assets';
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
@@ -134,7 +135,7 @@ export default function MapView({
       // satélite ni competir con las etiquetas de nombres, que van encima
       // (se añaden después). Cobertura real 1350-1911 con huecos antes; sin
       // datos ahí, sin más, igual que con los nombres.
-      map.addSource('chgis-boundaries', { type: 'geojson', data: '/data/chgis-boundaries.geojson' });
+      map.addSource('chgis-boundaries', { type: 'geojson', data: withBase('/data/chgis-boundaries.geojson') });
       map.addLayer({
         id: 'chgis-boundaries-line',
         type: 'line',
@@ -152,7 +153,7 @@ export default function MapView({
       // (~10.500) solo a partir de cierto zoom para no saturar el mapa;
       // prefecturas siempre visibles. Mapbox ya evita solapes de texto por
       // defecto (text-allow-overlap: false).
-      map.addSource('chgis', { type: 'geojson', data: '/data/chgis-settlements.geojson' });
+      map.addSource('chgis', { type: 'geojson', data: withBase('/data/chgis-settlements.geojson') });
       // Chino arriba, pinyin debajo más pequeño, en la misma etiqueta — ver
       // https://docs.mapbox.com/style-spec/reference/expressions/#format.
       const textoChinoYPinyin = ['format', ['get', 'name'], {}, '\n', {}, ['get', 'py'], { 'font-scale': 0.72 }];
@@ -188,7 +189,7 @@ export default function MapView({
       // dentro del recinto se sigan viendo por encima del relleno); el punto
       // rojo de aviso se añade después (ver más abajo) para ganarle al
       // dorado si coinciden en el mismo sitio.
-      map.addSource('capitales', { type: 'geojson', data: '/data/capitales.geojson' });
+      map.addSource('capitales', { type: 'geojson', data: withBase('/data/capitales.geojson') });
       const filtroRecinto = (y: number) => ['all', ['==', ['get', 'tipo'], 'recinto'], filtroAño(y)];
       const filtroPunto = (y: number) => ['all', ['==', ['get', 'tipo'], 'punto'], filtroAño(y)];
       map.addLayer({
@@ -213,7 +214,7 @@ export default function MapView({
       // ya vienen con la tolerancia de año aplicada (±25 años). El clic
       // "engancha" al punto más cercano en píxeles si hay uno cerca — ver
       // map.on('click') más abajo.
-      map.addSource('hitos', { type: 'geojson', data: '/data/hitos.geojson' });
+      map.addSource('hitos', { type: 'geojson', data: withBase('/data/hitos.geojson') });
       map.addLayer({
         id: 'hitos-circle',
         type: 'circle',
@@ -262,7 +263,7 @@ export default function MapView({
       // recinto real como los de 'capitales', de ahí el color propio, ni
       // rojizo ni blanco) — mismo estilo de texto que chgis-prefecture-
       // labels (texto claro, halo oscuro).
-      map.addSource('yacimientos', { type: 'geojson', data: '/data/yacimientos.geojson' });
+      map.addSource('yacimientos', { type: 'geojson', data: withBase('/data/yacimientos.geojson') });
       const simboloPorCategoria = ['match', ['get', 'categoria'], 'estado', '□', 'entierro', '★', 'fundicion', '●', 'residencial', '▲', ''];
       const textoSimboloYNombre = ['format', simboloPorCategoria, { 'font-scale': 1.3 }, '\n', {}, ['get', 'etiqueta'], { 'font-scale': 0.7 }];
       map.addLayer({
